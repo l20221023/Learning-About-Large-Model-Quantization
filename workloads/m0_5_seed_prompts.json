@@ -1,0 +1,34 @@
+{
+  "workload_id": "m0-5-same-input-awq-v1",
+  "source_workload_id": "m0-4-curated-seed-v1",
+  "provenance": "Reuse two project-authored M0-4 prompts; no external corpus or user data.",
+  "phase": "prefill",
+  "seed": 20261118,
+  "layer_id": 13,
+  "token_policy": "first and last non-special token positions after the checkpoint Chat Template",
+  "router_selection_counts_from_m0_4": {
+    "6": 69,
+    "63": 62,
+    "25": 1,
+    "2": 2
+  },
+  "candidate_experts": [
+    {"expert_id": 6, "frequency_class": "high"},
+    {"expert_id": 63, "frequency_class": "high"},
+    {"expert_id": 25, "frequency_class": "low"},
+    {"expert_id": 2, "frequency_class": "low"}
+  ],
+  "samples": [
+    {
+      "sample_id": "general-01",
+      "workload_group": "general",
+      "prompt": "Explain why a water bottle sweats on the outside on a warm day. Give two short reasons."
+    },
+    {
+      "sample_id": "code-01",
+      "workload_group": "code",
+      "prompt": "Write a Python function that returns the first duplicate integer in a list, or None if no value repeats. Include a short example call."
+    }
+  ],
+  "pairs": [[6, 63], [6, 25], [6, 2], [63, 25], [63, 2], [25, 2]]
+}
