@@ -13,11 +13,15 @@ def load_rows(path):
     if not isinstance(rows, list) or not rows:
         raise ValueError("empty M0-5 result rows")
     seen = set()
+    by_token = defaultdict(set)
+    experts = set()
     for row in rows:
         key = row["sample_id"], row["token_position"], row["expert_id"]
         if key in seen:
             raise ValueError(f"duplicate sample/token/expert coordinate: {key}")
         seen.add(key)
+        by_token[row["sample_id"], row["token_position"]].add(row["expert_id"])
+        experts.add(row["expert_id"])
         if row["layer_id"] != 13 or row["evidence"] != "MEASURED_COMMUNITY_AWQ_INT4":
             raise ValueError("unexpected layer or evidence class")
         if row["frequency_class"] not in {"high", "low"}:
@@ -31,6 +35,12 @@ def load_rows(path):
             raise ValueError("cosine similarity outside [-1, 1]")
         if row["left_norm"] < 0 or row["right_norm"] < 0 or row["native_router_weight"] < 0:
             raise ValueError("negative norm or router weight")
+        if row["shadow_reconstruction_allclose"] is not True:
+            raise ValueError("shadow reconstruction gate did not pass")
+        if not math.isfinite(row["shadow_reconstruction_relative_l2"]):
+            raise ValueError("non-finite reconstruction error")
+    if any(ids != experts for ids in by_token.values()):
+        raise ValueError("candidate experts do not cover every sample/token")
     return rows
 
 

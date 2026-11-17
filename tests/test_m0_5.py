@@ -12,9 +12,51 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from p2.experts.similarity import (fixed_weight_replacement_relative_l2,
                                    output_similarity, reconstruct_routed_output)
 from scripts.aggregate_m0_5 import load_pairs, load_rows
+from scripts.profile_awq_m0_5 import moe_hidden_from_call, run_shadow, single_worker
 
 
 class ExpertSimilarityTests(unittest.TestCase):
+    def test_single_worker_apply_model_contract(self):
+        marker = object()
+        self.assertIs(single_worker([marker]), marker)
+        with self.assertRaisesRegex(ValueError, "one vLLM model worker"):
+            single_worker([])
+        with self.assertRaisesRegex(ValueError, "one vLLM model worker"):
+            single_worker([marker, marker])
+
+    def test_fused_moe_keyword_hidden_hook_contract(self):
+        class KeywordModule(torch.nn.Module):
+            def forward(self, *, hidden_states):
+                return hidden_states * 2
+
+        module = KeywordModule()
+        captured = []
+        handle = module.register_forward_pre_hook(
+            lambda _module, args, kwargs: captured.append(moe_hidden_from_call(args, kwargs)),
+            with_kwargs=True)
+        hidden = torch.ones((1, 4))
+        try:
+            module(hidden_states=hidden)
+        finally:
+            handle.remove()
+        self.assertIs(captured[0], hidden)
+        self.assertIs(moe_hidden_from_call((hidden,), {}), hidden)
+        with self.assertRaisesRegex(ValueError, "hidden_states"):
+            moe_hidden_from_call((), {"other": hidden})
+
+    def test_shadow_runner_keyword_contract(self):
+        class KeywordRunner:
+            def __call__(self, *, hidden_states, router_logits):
+                self.shapes = hidden_states.shape, router_logits.shape
+                return hidden_states
+
+        runner = KeywordRunner()
+        hidden, logits = torch.ones(2048), torch.ones(64)
+        self.assertEqual(tuple(run_shadow(runner, hidden, logits).shape), (1, 2048))
+        self.assertEqual(runner.shapes, ((1, 2048), (1, 64)))
+        with self.assertRaisesRegex(ValueError, "one-token vectors"):
+            run_shadow(runner, hidden.unsqueeze(0), logits)
+
     def test_cosine_relative_l2_and_norm_metrics(self):
         metrics = output_similarity(torch.tensor([3.0, 4.0]), torch.tensor([0.0, 2.0]))
         self.assertAlmostEqual(metrics["cosine_similarity"], 0.8)
@@ -49,7 +91,9 @@ class ExpertSimilarityTests(unittest.TestCase):
                 "cosine_similarity": 1.0, "relative_l2": 0.0, "left_norm": 1.0,
                 "right_norm": 1.0, "norm_ratio_right_over_left": 1.0,
                 "absolute_l2": 0.0, "native_router_weight": 0.2,
-                "fixed_weight_replacement_relative_l2": 0.0, "native_selected": True}
+                "fixed_weight_replacement_relative_l2": 0.0, "native_selected": True,
+                "shadow_reconstruction_allclose": True,
+                "shadow_reconstruction_relative_l2": 0.0}
         rows = [dict(base, expert_id=expert) for expert in (6, 63)]
         pair = {"evidence": "MEASURED_COMMUNITY_AWQ_INT4", "layer_id": 13,
                 "sample_id": "s1", "token_position": 4, "expert_a": 6, "expert_b": 63,

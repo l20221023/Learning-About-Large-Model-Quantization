@@ -1,6 +1,6 @@
 # M0-5 同输入 Expert Output Similarity 自查报告
 
-**状态：BLOCKED（3090 实测尚未执行）。** 本阶段实现、离线静态检查和数值 helper 测试已完成；不得将合成单测解释为模型输出相似度结果。阻塞原因是当前 Codex 主机到已授权 AutoDL SSH 地址在 TCP 阶段被拒绝，尚未进入 SSH 认证。
+**状态：BLOCKED（真实模型探针失败，最终 shadow gate 未完成）。** 2026-11-18 已在单张 RTX 3090 上实际加载社区 AWQ 模型并启动单提示探针；首次失败暴露 pre-hook 参数读取错误。随后修复 hook 与 `MoERunner.forward` 调用并通过本地 35 项测试，但修复版未能部署复跑：约 07:24 起 AutoDL SSH 端口拒绝连接。没有生成可审查的专家相似度数据；本地测试不等于模型实测通过。
 
 ## 目标与边界
 
@@ -21,17 +21,21 @@
 | 命令/检查 | 结果 |
 |---|---|
 | `C:\Users\li\.conda\envs\pytorch_clean\python.exe -B -m py_compile scripts/profile_awq_m0_5.py scripts/aggregate_m0_5.py tests/test_m0_5.py` | PASS |
-| `C:\Users\li\.conda\envs\pytorch_clean\python.exe -B -m unittest discover -s tests -p 'test_m0_*.py'` | PASS，32 tests |
+| `C:\Users\li\.conda\envs\pytorch_clean\python.exe -B -m unittest discover -s tests -p 'test_m0_*.py'` | PASS，修复后 35 tests；日志见 [`stage_artifacts/M0-5/local-tests.log`](../stage_artifacts/M0-5/local-tests.log) |
 | `python -B -m unittest discover ...`（Windows Store shim） | 启动失败；随后改用明确的已安装 conda Python |
 | `E:\MiniConda\python.exe ...` | M0-5 导入失败（没有 PyTorch）；未当作测试结果，随后切换到报告指定环境 |
-| `ssh -p 36905 ... root@connect.nmb2.seetacloud.com` | TCP `Permission denied`，不能连接 |
-| SSH `-vv` 短超时复查 | 解析为 `1.27.207.179`，TCP 连接仍 `Permission denied`；未进入用户认证 |
+| 2026-11-18 00:58 与 01:05，禁用公钥、StrictHostKeyChecking=yes 的交互 SSH | 登录成功；核对保存主机密钥无变化，确认 RTX 3090、现存 AWQ 快照与 vLLM venv、磁盘余量；数据盘可用约 37.56 GB，系统盘约 32.00 GB。登录 banner 未提供剩余时长。 |
+| 部署 M0-5 runner 与单候选探针 workload，远端 `sha256sum` 对部署文件校验 | 成功；首轮代码 SHA `bf368533...`，探针 workload SHA `7529d8e6...`。无权重下载。 |
+| `bash /root/autodl-tmp/p2-deepseek-moe/autodl_storage_guard.sh run 1073741824 -- env ... python profile_awq_m0_5.py --workload workloads/api_probe_workload.json ...` | **失败，退出 1**。模型加载和 prefill 调用开始后，`register_forward_pre_hook` 只收到空 positional inputs，错误为 `ValueError: not enough values to unpack (expected 1, got 0)`。完整日志仍在远端 `/root/autodl-tmp/logs/M0-5-api-probe-20261118T010700-3090/run.log`，同目录 `gpu.csv`、`exit`；本次退出码文件为 `1`。原始数据尚未拉回本地，SHA 待实例恢复后计算。 |
+| 修复 hook 为 `with_kwargs=True`，并核对/修复 `MoERunner.forward(hidden_states, router_logits, input_ids=None)` 调用 | 本地修复完成；当前 runner SHA `415172c373f735e96b86e5e17acb5b7670d60b32d84ede593bfa31cb84bdbc6f`。修复版未部署、未复跑。 |
+| 修复后本地 py_compile 与 M0 回归 | PASS，35 tests；总调度独立复跑退出 0，命令/哈希见 [`local manifest`](../stage_artifacts/M0-5/local-manifest.json)。 |
+| 2026-11-18 07:24–07:25 SSH 端口复查 | TCP Connection refused，原会话由远端关闭；已保存主机密钥条目仍在，但连接不可达。发生时间已到达用户预估的 5–6 小时窗口末端。未部署后续修复、未产生最终 shadow 输出。 |
 
-没有执行 GPU profiler，也没有生成真实 `expert_similarity.json`。没有远程日志、显存或实测输出可报告。此前 M0-4 结果和云端权重不受此阻塞影响。
+首轮是真实模型集成探针，进入模型前向后因 hook 错误失败；它没有导出 `expert_similarity.json`，不能算 M0-5 shadow forward 成功。GPU 采样日志仍留在远端，未能拉回核查峰值或精确运行资源。没有生成最终专家/pair 相似度 JSON、聚合 CSV 或通过重构门槛的记录。云端原始失败日志路径和 runner 路径已记录，SHA 需访问恢复后补记。原始 AWQ 权重未改动；首轮可用磁盘余量仍高于 8/10 GiB 底线。
 
 ## 待恢复连接后的复现命令
 
-在 AutoDL 已连接且存储 preflight 通过后，将此 checkout 的三个新增 runner/helper 文件及 workload 拷入现有工作目录（保留云端既有权重和 venv），然后运行：
+在 AutoDL 实例恢复或用户授权继续使用后，重新核对主机密钥、运行时间、3090 独占和 8/10 GiB 磁盘底线；先拉回首轮原始失败日志，再把当前 checkout 的 runner/helper/workload 拷入现有目录（保留云端既有权重和 venv），随后运行：
 
 ```bash
 bash /root/autodl-tmp/p2-deepseek-moe/run_m0_5_autodl.sh
@@ -47,9 +51,9 @@ $py = 'C:\Users\li\.conda\envs\pytorch_clean\python.exe'
 
 ## 未验证事项和限制
 
-1. 当前无法读取目标云机上的现存文件和 GPU 状态；M0-4 审计时的空间余量不是本次当前容量观测。runner 自身仍会在远端启动前做最新 preflight。
-2. 未验证 vLLM 0.26.0 的实际 MoE router method 绑定方式、候选 forced ID 张量布局、kernel 对非目标 filler experts 的零权处理，也未验证 shadow 重构阈值 `atol=rtol=2e-3` 是否足以且严格。实测如失败必须保留日志并修复后重跑。
+1. 首轮登录时已现场确认 GPU 与磁盘；当前端口不可达，无法确认实例是否关机或重新读取资源状态。远端失败日志和 GPU CSV 还未下载。
+2. 通过本地源码审查了 vLLM 0.26.0 的 `MoERunner.forward` 参数；但修复版尚未部署，forced ID 布局、非目标 filler 的零权行为以及 `atol=rtol=2e-3` 的实际适用性均未经过 3090 核验。
 3. M0-4 高频/低频计数基于每类仅两条自编提示，不能视作线上频率。两条 prompt 与首尾 token 只构成小型探索样本。
 4. 未测 BF16、专家删除/合并、端到端质量或性能，也未建立生成任务的统计置信区间。
 
-恢复连接后先执行受控部署、API 小探针和完整 shadow reconstruction gate；只有实测和归档完成才可把 M0-5 改为 PASS。按用户要求，后续阶段继续逐项执行，最后统一验收。
+恢复实例访问后先归档首轮失败日志，运行修复版单提示探针和完整 shadow reconstruction gate；只有真实 3090 重构门槛、指标导出与原始数据复核通过，才可把 M0-5 改为 PASS。Phase 1–6 会话已建立为待依赖前序复核后派发；因 M0-5 当前 BLOCKED，不得启动依赖实验。用户需决定是否恢复/延长同一 3090 实例的可用时间；不自动启动新的付费 GPU 资源。

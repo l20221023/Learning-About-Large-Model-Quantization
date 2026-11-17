@@ -1,0 +1,28 @@
+{
+  "test_command": "C:\\Users\\li\\.conda\\envs\\pytorch_clean\\python.exe -B -m unittest discover -s tests -p test_m0_*.py",
+  "test_exit": 0,
+  "compile_command": "C:\\Users\\li\\.conda\\envs\\pytorch_clean\\python.exe -B -m py_compile scripts/profile_awq_m0_5.py scripts/aggregate_m0_5.py tests/test_m0_5.py",
+  "compile_exit": 0,
+  "files": [
+    {
+      "path": "scripts/profile_awq_m0_5.py",
+      "sha256": "415172c373f735e96b86e5e17acb5b7670d60b32d84ede593bfa31cb84bdbc6f"
+    },
+    {
+      "path": "scripts/aggregate_m0_5.py",
+      "sha256": "89ee164e42c19726f1116b9b4830f3f3bb3fcf76d808cd528bb446441bf5c67d"
+    },
+    {
+      "path": "tests/test_m0_5.py",
+      "sha256": "d27444bf7a4393a742596c0be1be2048ee65385c21dbe09c0024d1eaf5d42493"
+    },
+    {
+      "path": "scripts/run_m0_5_autodl.sh",
+      "sha256": "91fcf17e533dd2cf3a1dec07b7a2f6ea453bf025d0dad4791968f86846d56d4e"
+    },
+    {
+      "path": "workloads/m0_5_seed_prompts.json",
+      "sha256": "161af5b41da9294faa657620c05901657b618efdbc31a7f8e3130f284411bdec"
+    }
+  ]
+}

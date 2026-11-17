@@ -16,7 +16,10 @@ from p2.experts.similarity import (fixed_weight_replacement_relative_l2,
                                    output_similarity, reconstruct_routed_output)
 from p2.weights.audit import write_json
 from p2.weights.safetensors_io import now
-from trace_awq_3090 import EVIDENCE, REPO, REV, SEED
+try:
+    from .trace_awq_3090 import EVIDENCE, REPO, REV, SEED
+except ImportError:
+    from trace_awq_3090 import EVIDENCE, REPO, REV, SEED
 
 
 def inventory(model, layer_id):
@@ -37,14 +40,39 @@ def inventory(model, layer_id):
                     "fused_experts": type(fused).__name__ if fused is not None else None}
 
 
+def single_worker(results):
+    if not isinstance(results, list) or len(results) != 1:
+        raise ValueError(f"expected one vLLM model worker, got {type(results).__name__}")
+    return results[0]
+
+
+def moe_hidden_from_call(args, kwargs):
+    if args:
+        hidden = args[0]
+    else:
+        hidden = kwargs.get("hidden_states")
+    if hidden is None or not hasattr(hidden, "ndim") or hidden.ndim != 2:
+        raise ValueError("FusedMoE call did not supply 2-D hidden_states")
+    return hidden
+
+
+def run_shadow(runner, hidden, router_logits):
+    if hidden.ndim != 1 or router_logits.ndim != 1:
+        raise ValueError("shadow inputs must be one-token vectors")
+    if hidden.device != router_logits.device:
+        raise ValueError("shadow hidden and router logits must share device")
+    return runner(hidden_states=hidden.unsqueeze(0),
+                  router_logits=router_logits.unsqueeze(0))
+
+
 def capture_layer(model, layer_id):
     model._p2_m05 = {"hidden": None, "native_output": None, "native_route": None}
     runner = model.model.layers[layer_id].mlp.experts
 
-    def pre_hook(_module, inputs):
+    def pre_hook(_module, inputs, kwargs):
         if model._p2_m05["hidden"] is not None:
             raise ValueError("target FusedMoE called more than once for request")
-        hidden, = inputs
+        hidden = moe_hidden_from_call(inputs, kwargs)
         if hidden.ndim != 2 or hidden.shape[0] < 1:
             raise ValueError(f"unexpected FusedMoE hidden layout {tuple(hidden.shape)}")
         model._p2_m05["hidden"] = hidden.detach().clone()
@@ -52,7 +80,7 @@ def capture_layer(model, layer_id):
     def output_hook(_module, _inputs, output):
         model._p2_m05["native_output"] = output.detach().clone()
 
-    handle_pre = runner.register_forward_pre_hook(pre_hook)
+    handle_pre = runner.register_forward_pre_hook(pre_hook, with_kwargs=True)
     handle_out = runner.register_forward_hook(output_hook)
     router = runner.router
     original = router.select_experts
@@ -114,10 +142,10 @@ def main():
                     cuda=torch.version.cuda, engine_options=options)
         llm = LLM(model=str(args.snapshot.resolve(strict=True)), **options)
         meta.update(gpu=torch.cuda.get_device_name(), runtime_model_class=
-                    llm.apply_model(lambda model: type(model).__name__))
+                    single_worker(llm.apply_model(lambda model: type(model).__name__)))
         tokenizer = llm.get_tokenizer()
         special = set(tokenizer.all_special_ids)
-        runner, layer_info = llm.apply_model(lambda model: inventory(model, layer_id))
+        runner, layer_info = single_worker(llm.apply_model(lambda model: inventory(model, layer_id)))
         meta["runtime_layer"] = layer_info
         sampling = SamplingParams(temperature=0.0, max_tokens=1, seed=SEED)
         for sample in workload["samples"]:
@@ -128,13 +156,16 @@ def main():
             if not valid_positions:
                 raise ValueError(f"no non-special tokens for {sample['sample_id']}")
             positions = sorted(set([valid_positions[0], valid_positions[-1]]))
-            runtime_runner, router, original, h_pre, h_out = llm.apply_model(
-                lambda model: capture_layer(model, layer_id))
+            runtime_runner, router, original, h_pre, h_out = single_worker(llm.apply_model(
+                lambda model: capture_layer(model, layer_id)))
             if runtime_runner is not runner:
                 raise ValueError("model runner changed between inventory and request")
             handles = (router, original, h_pre, h_out)
             result, = llm.generate([{"prompt_token_ids": prompt_ids}], sampling, use_tqdm=False)
-            state = llm.apply_model(lambda model: model._p2_m05)
+            state = single_worker(llm.apply_model(lambda model: model._p2_m05))
+            h_pre.remove(); h_out.remove()
+            router.select_experts = original
+            handles = None
             h, native_output = state["hidden"], state["native_output"]
             route_logits, native_ids, native_weights = state["native_route"]
             if h.shape[0] != len(prompt_ids) or route_logits.shape[0] != len(prompt_ids):
@@ -146,7 +177,9 @@ def main():
                 selected_weights = native_weights[pos].detach().float().cpu().tolist()
                 routed_expert_outputs = {}
                 per_candidate = {}
-                for candidate in expert_ids:
+                if len(selected_ids) != 6 or len(set(selected_ids)) != 6:
+                    raise ValueError("native Top-6 router IDs are incomplete or duplicated")
+                for candidate in dict.fromkeys([*expert_ids, *selected_ids]):
                     fill = [e for e in range(64) if e != candidate][:5]
                     forced_ids = torch.tensor([[candidate] + fill], device=h.device,
                                               dtype=native_ids.dtype)
@@ -160,7 +193,8 @@ def main():
 
                     router.select_experts = force
                     try:
-                        isolated = runtime_runner(selected_h.unsqueeze(0)).detach().squeeze(0)
+                        isolated = run_shadow(runtime_runner, selected_h,
+                                              route_logits[pos].detach()).detach().squeeze(0)
                     finally:
                         router.select_experts = original
                     if not torch.isfinite(isolated).all():
@@ -179,17 +213,15 @@ def main():
                                   torch.linalg.vector_norm(observed).clamp_min(1e-12))
                     raise ValueError(f"shadow reconstruction failed at {sample['sample_id']}:{pos}; relative_l2={error}")
                 token_rows = []
-                baseline_expert = next((e for e in expert_ids if e in selected_ids), None)
-                baseline_weight = (selected_weights[selected_ids.index(baseline_expert)]
-                                   if baseline_expert is not None else 0.0)
+                baseline_expert = selected_ids[0]
+                baseline_weight = selected_weights[0]
                 for candidate in expert_ids:
                     metrics = output_similarity(per_candidate[expert_ids[0]],
                                                 per_candidate[candidate])
                     native_slots = [i for i, expert in enumerate(selected_ids) if expert == candidate]
                     router_weight = selected_weights[native_slots[0]] if native_slots else 0.0
                     replacement = fixed_weight_replacement_relative_l2(
-                        observed, per_candidate[baseline_expert] if baseline_expert is not None
-                        else per_candidate[expert_ids[0]], per_candidate[candidate], baseline_weight)
+                        observed, per_candidate[baseline_expert], per_candidate[candidate], baseline_weight)
                     row = {"evidence": EVIDENCE, "layer_id": layer_id,
                            "sample_id": sample["sample_id"],
                            "workload_group": sample["workload_group"], "token_position": pos,
@@ -219,9 +251,6 @@ def main():
                                 "native_router_weights": selected_weights,
                                 "shadow_reconstruction_pass": parity,
                                 "rows": token_rows, "pair_metrics": pair_rows})
-            h_pre.remove(); h_out.remove()
-            router.select_experts = original
-            handles = None
             captured.extend(row for detail in details for row in detail["rows"])
             write_json(out / f"{sample['sample_id']}.json", {
                 "sample_id": sample["sample_id"], "prompt_token_ids": prompt_ids,

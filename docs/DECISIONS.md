@@ -25,3 +25,11 @@
 - CUDA FP16 softmax 与 CPU 直接 FP16 复算会在舍入中点相差一个 ULP。保留严格校验，改为 FP64 参考概率并检查 FP16 舍入区间；native Top-6 IDs 和 logits 不变性仍单独核验。失败日志及原始 captures 留档。[M0-4 报告](../reports/M0-4_validation.md)
 - AutoDL 按用户要求建立数据盘缓存环境及容量守护，保持 8 GiB 系统盘和 10 GiB 数据盘余量；缓存环境由 `.bashrc` 与项目 runner 加载。没有搬动权重、删除缓存或使用只读 `/autodl-pub`。[存储审计](../reports/storage_audit_autodl_20261118.md)
 - 当前 31.41 GB 官方 BF16 checkpoint 下载和需 BF16/INT4 共存的量化峰值无法满足数据盘保留线。没有下载 BF16 或开展完整量化；小型既有 AWQ 实验未触发空间风险。
+
+## 2026-11-18 总调度与 M0-5 恢复
+
+- 用户明确授权在当前既有 RTX 3090 实例上继续实验，并要求阶段间连续推进、最终统一人工验收。总调度以独立 Codex 会话拆分 M0-5 与 Phase 1–6，依赖阶段顺序派发；Phase 1–6 任务创建后保持待派发，不与 M0-5 并发，也不并发占用 3090。总调度独占维护共享计划、决策和证据台账，阶段副本交付到各自独立目录。
+- 2026-11-18 00:58 Asia/Shanghai 通过已保存主机密钥的严格校验及禁用公钥的交互密码方式登录成功。现场磁盘余量满足 8/10 GiB 底线，3090 空闲，现存 AWQ 权重和 vLLM 隔离环境可用。用户提供的实例时长是约 5–6 小时；登录 banner 未给出剩余倒计时，不能据此当作精确剩余时间。
+- M0-5 静态审查发现原实现只对四个候选专家进行 shadow forward，却需要按六个 native Top-K 专家重构 FusedMoE 输出。该实现无法通过正确性门槛。先扩展执行集合覆盖候选与 native Top-6，并验证单 worker 的 `apply_model` 返回形态；是否正确仍需 3090 实测与 shadow reconstruction gate 证明。
+- 首次 AWQ 3090 API 探针（单提示、单候选）实际进入模型生成后失败：PyTorch pre-hook 得到空 positional tuple，说明 vLLM 的 FusedMoE 调用将参数放在 kwargs。退出码 1，完整日志在 `/root/autodl-tmp/logs/M0-5-api-probe-20261118T010700-3090/run.log`，GPU 随后释放。修复方向是使用 `with_kwargs=True` 并按 vLLM 实际参数名取得 hidden；修复后必须重跑探针及完整 shadow reconstruction，不接受只依赖单测。
+- 当前远端 `main` 无法由 `git ls-remote` 确认，保留待核验状态；本地首次提交不重做。阶段结束仍按用户明确授权检查 staged diff 和敏感信息后提交/推送；推送失败记录 SHA 并标记未发布。

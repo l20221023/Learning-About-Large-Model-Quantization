@@ -16,3 +16,15 @@
 | AutoDL 空间与缓存路径 | [R] `/` 30G free 约30G；`/root/autodl-tmp` 50G free 35G；安全保留线分别8/10 GiB。所有适用缓存变量已指向数据盘。完整官方BF16下载及转换峰值被安全预检拒绝。 | [存储审计报告](../reports/storage_audit_autodl_20261118.md) |
 | SERE 公开实验的精确 checkpoint 和环境，Brownout Lite Chat 的直接实验 | [E/U] M0-1 | Phase 2 / Phase 3 核实 |
 | 生成质量、校准后性能、显存、上下文长度和部署收益 | [U] | 后续基线及受控实验 |
+
+## 2026-11-18 总调度现场核验
+
+| 问题 | 当前证据 | 验证安排 |
+|---|---|---|
+| AutoDL 连接、主机身份与当前资源 | [R] 2026-11-18 00:58 Asia/Shanghai 成功交互登录。StrictHostKeyChecking=yes 使用保存条目且无变更警告；GPU 为 RTX 3090 24 GiB，空闲；`/` 可用 31,998,771,200 B，`/root/autodl-tmp` 可用 37,565,026,304 B；现存 AWQ 快照约 8.5 GiB。实例精确剩余时间未获得，本轮按用户此前约 5–6 小时估计规划。 | M0-5 runner 启动前及长任务期间重新测余量，并启用既有 guard。 |
+| M0-5 shadow forward 正确性 | [U] 现有 runner 的候选列表只有 4 个专家，但 native router 是 Top-6，故旧实现的重构输入不完整。会话正在将 shadow 覆盖扩展为候选集合 ∪ native Top-6，并核查 `apply_model` worker 返回形式；尚无 3090 运行结果。 | 完成 API 探针与真实 AWQ 3090 reconstruction gate；失败须保留证据并修复复跑。 |
+| M0-5 第一次 3090 API 探针 | [R/FAIL] 2026-11-18 01:07 左右使用单条 general 提示及单个候选专家真实加载 AWQ；生成阶段 native FusedMoE 调用触发 `ValueError: not enough values to unpack (expected 1, got 0)`，日志 `/root/autodl-tmp/logs/M0-5-api-probe-20261118T010700-3090/run.log`，退出码 1。Traceback 指向 PyTorch pre-hook 只接收 positional inputs，而 vLLM 调用通过 kwargs；没有导出任何相似度行。GPU 已释放，系统/数据盘均仍满足保留线。 | 用 `with_kwargs=True` 捕获并验证 hidden 输入，再重跑 API probe；失败日志保留，不能算作通过。 |
+| M0-5 修复版与最终数据 | [R] 已核实 vLLM 0.26.0 `MoERunner.forward(hidden_states, router_logits, input_ids=None)`；补齐 `router_logits` keyword、Top-6 shadow 覆盖、kwarg pre-hook；当前 runner SHA `415172c373f735e96b86e5e17acb5b7670d60b32d84ede593bfa31cb84bdbc6f`。总调度独立复跑 py_compile 和 35 项 M0 回归通过。**修复版未部署/未实测**，无相似度输出。 | 实例访问恢复后先拉回失败日志，再部署固定 SHA 重跑小探针和完整门槛。 |
+| AutoDL 当前可达性 | [R/UNKNOWN] 2026-11-18 07:24–07:25 同一保存 host key 下 TCP 36905 Connection refused，旧 SSH 会话已由远端关闭。失败日志留在实例数据盘，未拉回。原因可能为实例时长窗口结束；没有 dashboard 状态证据，不能断言实例具体电源状态。 | 用户决定恢复/延长同一实例后再核对状态与磁盘，不自动新增付费 GPU。 |
+| 当前 GitHub `main` | [U] 本地 `git ls-remote --heads origin main` 未返回 ref；本地 HEAD 仍为首次提交 `def624fd53e18a4d230bd2ec7f592e23a2569b7b`。 | 网络恢复后查明远端 SHA，禁止强推；每次本地提交单独记录。 |
+| 阶段调度与 GPU 串行 | [R] 已建立 M0-5、Phase 1–6 七个独立 Codex 会话；M0-5 当前 BLOCKED，Phase 1–6 为待派发队列，未并发占用 GPU。 | 总调度复核前序代码、日志、原始数据、复现命令、资源和限制后，逐个派发依赖阶段；保持单 3090 锁。 |
