@@ -33,3 +33,9 @@
 - M0-5 静态审查发现原实现只对四个候选专家进行 shadow forward，却需要按六个 native Top-K 专家重构 FusedMoE 输出。该实现无法通过正确性门槛。先扩展执行集合覆盖候选与 native Top-6，并验证单 worker 的 `apply_model` 返回形态；是否正确仍需 3090 实测与 shadow reconstruction gate 证明。
 - 首次 AWQ 3090 API 探针（单提示、单候选）实际进入模型生成后失败：PyTorch pre-hook 得到空 positional tuple，说明 vLLM 的 FusedMoE 调用将参数放在 kwargs。退出码 1，完整日志在 `/root/autodl-tmp/logs/M0-5-api-probe-20261118T010700-3090/run.log`，GPU 随后释放。修复方向是使用 `with_kwargs=True` 并按 vLLM 实际参数名取得 hidden；修复后必须重跑探针及完整 shadow reconstruction，不接受只依赖单测。
 - 当前远端 `main` 无法由 `git ls-remote` 确认，保留待核验状态；本地首次提交不重做。阶段结束仍按用户明确授权检查 staged diff 和敏感信息后提交/推送；推送失败记录 SHA 并标记未发布。
+
+## 2026-11-18 M0-5 接续实测
+
+- 实例恢复连接后，M0-5 两次失败探针及后续成功探针、正式运行均保留退出码和原始日志。第二次失败暴露独立调用缺 vLLM forward context。最终使用单设备 context，在 shared 专家合并前截取 routed 输出，令原生与 shadow 共享同一观测点。
+- 正式 AWQ 3090 运行 `M0-5-full-20261118T075249-3090` 退出 0；4/4 个采样 token 通过 Top-6 routed 输出重构。结果限定社区 AWQ、第 13 层、两条自编提示，不能外推 BF16、专家合并安全性或整模型质量。原始包与独立审计见 `experiments/results/M0-5-full-20261118T075249-3090/`、`stage_artifacts/M0-5/FINAL_AUDIT.md`。
+- M0-5 通过总调度复核后已派发 Phase 1；仍只使用现有 3090 和既有 AWQ 权重，GPU 串行锁为 `/root/autodl-tmp/p2-3090.lock`。官方 BF16 权重下载与转换继续受容量和授权门槛约束。

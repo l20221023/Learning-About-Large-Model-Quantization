@@ -6,7 +6,7 @@
 - M0-4 自查 **PASS（探索性社区 AWQ prefill 路径）**。6 条自编提示、3 类负载、169 个有效 token、4,394 条 Trace；选择数、共激活、Shared hook 和插桩前后 logits 不变量通过。[M0-4 自查报告](../reports/M0-4_validation.md)
 - AutoDL 存储审计与容量保护已完成；官方 BF16 下载和 BF16→量化共存转换目前受 10 GiB 数据盘保留线限制。[存储审计](../reports/storage_audit_autodl_20261118.md)
 - 用户要求后续实验连续逐个验证并在最后统一验收；阶段自查仍需逐项留证，但本轮不在每个阶段暂停等验收。当前继续 M0-5，保留 AWQ/BF16 证据边界和资源授权门禁。
-- M0-5 自查 **BLOCKED（真实模型探针失败，shadow gate 未完成）**。首轮真实 AWQ 3090 加载后暴露 kwargs pre-hook 错误；hook 与 `MoERunner.forward` 双输入已本地修复，35 项本地测试通过。修复版未复跑；07:24 起云端 TCP Connection refused，远端失败日志未拉回。本地自查及接续项见 [M0-5 阶段审计](../reports/M0-5_validation.md) 和 [`stage_artifacts/M0-5/STATUS.md`](../stage_artifacts/M0-5/STATUS.md)。
+- M0-5 自查及独立复核 **PASS（社区 AWQ INT4 第 13 层小样本）**。正式 3090 运行 4/4 个 token 的 Top-6 shadow 重构门槛通过，16 条候选专家记录和 24 条专家对记录已归档。结果不代表官方 BF16 或整模型质量。[接续报告](../stage_artifacts/M0-5/RESUME_20261118.md) · [独立复核](../stage_artifacts/M0-5/FINAL_AUDIT.md)
 
 ## 总调度队列（2026-11-18）
 
@@ -14,8 +14,8 @@
 
 | 顺序 | 会话 | 依赖 | 资源 | 状态 / 当前门槛 |
 |---|---|---|---|---|
-| 1 | M0-5 AWQ Expert Shadow | M0-2/3/4 自查产物 | 现有 AWQ、单张 3090、现有 vLLM 0.26.0、无下载；保留系统盘 8 GiB / 数据盘 10 GiB | **BLOCKED**。3090 首轮单提示探针真实加载 AWQ，但 pre-hook 报 kwargs capture 错误；本地已修复 hook 和 `MoERunner.forward` 双参并通过 35 tests。修复后未复跑；07:24 后 SSH Connection refused。没有相似度数据。 |
-| 2 | Phase 1 量化基线 | M0-5 总调度复核 | CPU 准备；若运行 GPU，仅现有 3090、现存 AWQ | 已建立待派发会话；禁止官方 BF16 下载/大权重量化，除非空间峰值审计和授权通过。 |
+| 1 | M0-5 AWQ Expert Shadow | M0-2/3/4 自查产物 | 现有 AWQ、单张 3090、现有 vLLM 0.26.0、无下载；保留系统盘 8 GiB / 数据盘 10 GiB | **PASS（限定范围）**。正式运行 `M0-5-full-20261118T075249-3090` 退出 0；4/4 重构门槛通过；原始包与独立复核已归档。 |
+| 2 | Phase 1 量化基线 | M0-5 总调度复核 | CPU 准备；若运行 GPU，仅现有 3090、现存 AWQ | **已派发**。禁止官方 BF16 下载/大权重量化，除非空间峰值审计和授权通过。 |
 | 3 | Phase 2 低成本 MoE 对照 | Phase 1 复核 | CPU 准备；3090 串行 | 已建立待派发会话；先单层与低成本对照。 |
 | 4 | Phase 3 United Expert 蒸馏 | Phase 2 复核并选定结构方法 | 低成本 CPU 准备；3090 串行 | 已建立待派发会话；K=2/4 单层开始，禁止扩展到未授权长训练。 |
 | 5 | Phase 4 结构 × 量化 | Phase 1–3 复核 | 固定现有设备与权重；空间保留线 | 已建立待派发会话；缺失对照格必须标 BLOCKED，不跨设备推算加速。 |

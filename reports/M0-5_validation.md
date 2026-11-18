@@ -1,5 +1,7 @@
 # M0-5 同输入 Expert Output Similarity 自查报告
 
+> **2026-11-18 接续结论：PASS（限定社区 AWQ INT4、第 13 层、两条自编提示）。** 后文保留首次 BLOCKED 及失败探针的历史记录；最终实测、失败修复和原始归档见 [接续报告](../stage_artifacts/M0-5/RESUME_20261118.md) 与 [独立复核](../stage_artifacts/M0-5/FINAL_AUDIT.md)。正式运行退出 0，4/4 个 token 通过原生 Top-6 shadow 重构，导出 16 条候选记录和 24 条专家对记录。官方 BF16 与整模型质量仍未验证。
+
 **状态：BLOCKED（真实模型探针失败，最终 shadow gate 未完成）。** 2026-11-18 已在单张 RTX 3090 上实际加载社区 AWQ 模型并启动单提示探针；首次失败暴露 pre-hook 参数读取错误。随后修复 hook 与 `MoERunner.forward` 调用并通过本地 35 项测试，但修复版未能部署复跑：约 07:24 起 AutoDL SSH 端口拒绝连接。没有生成可审查的专家相似度数据；本地测试不等于模型实测通过。
 
 ## 目标与边界

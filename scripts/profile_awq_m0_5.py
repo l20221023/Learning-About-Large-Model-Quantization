@@ -28,6 +28,8 @@ def inventory(model, layer_id):
         raise ValueError("unexpected DeepSeek-V2-Lite decoder topology or layer")
     runner = layers[layer_id].mlp.experts
     quant = runner.routed_experts.quant_method
+    if runner.moe_config.tp_size != 1 or runner.moe_config.dp_size != 1:
+        raise ValueError("routed output capture requires single-device execution")
     if quant.is_monolithic:
         raise ValueError("cannot shadow-route experts through a monolithic MoE kernel")
     kernel = getattr(quant, "moe_kernel", None)
@@ -66,6 +68,9 @@ def run_shadow(runner, hidden, router_logits):
 
 
 def capture_layer(model, layer_id):
+    from dataclasses import replace
+    from vllm.forward_context import get_forward_context
+
     model._p2_m05 = {"hidden": None, "native_output": None, "native_route": None}
     runner = model.model.layers[layer_id].mlp.experts
 
@@ -77,8 +82,11 @@ def capture_layer(model, layer_id):
             raise ValueError(f"unexpected FusedMoE hidden layout {tuple(hidden.shape)}")
         model._p2_m05["hidden"] = hidden.detach().clone()
 
+        model._p2_m05["context"] = replace(get_forward_context(), all_moe_layers=None)
+
     def output_hook(_module, _inputs, output):
-        model._p2_m05["native_output"] = output.detach().clone()
+        if model._p2_m05["native_output"] is None:
+            raise ValueError("routed output capture did not run")
 
     handle_pre = runner.register_forward_pre_hook(pre_hook, with_kwargs=True)
     handle_out = runner.register_forward_hook(output_hook)
@@ -98,6 +106,18 @@ def capture_layer(model, layer_id):
 
     router.select_experts = select
     return runner, router, original, handle_pre, handle_out
+
+
+def intercept_routed(runner, destination):
+    original = runner._maybe_apply_routed_scale_to_output
+
+    def record(shared, routed):
+        shared, routed = original(shared, routed)
+        destination["native_output"] = routed.detach().clone()
+        return shared, routed
+
+    runner._maybe_apply_routed_scale_to_output = record
+    return original
 
 
 def main():
@@ -131,6 +151,7 @@ def main():
     status = 1
     try:
         import torch
+        from vllm.forward_context import override_forward_context
         from vllm import LLM, SamplingParams, __version__
         if __version__ != "0.26.0":
             raise ValueError(f"instrumentation pinned to vLLM 0.26.0, got {__version__}")
@@ -161,8 +182,12 @@ def main():
             if runtime_runner is not runner:
                 raise ValueError("model runner changed between inventory and request")
             handles = (router, original, h_pre, h_out)
-            result, = llm.generate([{"prompt_token_ids": prompt_ids}], sampling, use_tqdm=False)
             state = single_worker(llm.apply_model(lambda model: model._p2_m05))
+            original_scale = intercept_routed(runtime_runner, state)
+            try:
+                result, = llm.generate([{"prompt_token_ids": prompt_ids}], sampling, use_tqdm=False)
+            finally:
+                runtime_runner._maybe_apply_routed_scale_to_output = original_scale
             h_pre.remove(); h_out.remove()
             router.select_experts = original
             handles = None
@@ -193,8 +218,15 @@ def main():
 
                     router.select_experts = force
                     try:
-                        isolated = run_shadow(runtime_runner, selected_h,
-                                              route_logits[pos].detach()).detach().squeeze(0)
+                        shadow = {}
+                        original_scale = intercept_routed(runtime_runner, shadow)
+                        try:
+                            with torch.inference_mode(), override_forward_context(state["context"]):
+                                run_shadow(runtime_runner, selected_h.clone(),
+                                           route_logits[pos].detach())
+                        finally:
+                            runtime_runner._maybe_apply_routed_scale_to_output = original_scale
+                        isolated = shadow["native_output"].squeeze(0)
                     finally:
                         router.select_experts = original
                     if not torch.isfinite(isolated).all():

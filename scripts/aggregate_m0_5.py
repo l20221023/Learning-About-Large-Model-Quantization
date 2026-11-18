@@ -96,7 +96,7 @@ def aggregate(rows, pairs, out):
             })
     pair_groups = defaultdict(list)
     for row in pairs:
-        pair_groups[tuple(sorted((row["expert_a"], row["expert_b"])))].append(row)
+        pair_groups[row["expert_a"], row["expert_b"]].append(row)
     with (out / "pair_summary.csv").open("w", newline="", encoding="utf-8") as stream:
         fields = ["expert_a", "expert_b", "observations", "mean_cosine_similarity",
                   "mean_relative_l2", "mean_norm_ratio_b_over_a"]
