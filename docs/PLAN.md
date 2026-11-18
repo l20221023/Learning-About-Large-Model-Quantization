@@ -27,6 +27,7 @@
 - 2026-11-18 08:34 起重新以 StrictHostKeyChecking=yes、禁用公钥的密码交互方式登录同一 AutoDL 实例；host key 未变化。登录时 RTX 3090 空闲，系统盘可用 31,998,705,664 B、数据盘 37,557,784,576 B；用户确认剩余 GPU 时长足够，AutoDL banner 未提供精确时长读数。Phase1 两轮 in-process decode 探针与一轮服务先导均由 3090 锁和存储 guard 保护；结束 GPU 0 MiB，磁盘余量仍高于 8/10 GiB 保留线。
 - Phase1 首轮服务 `Phase1-AWQ-20261118T082549-3090` 退出 1（15 请求中 8 失败），保留但不计入成功数据。收敛 vLLM 服务限制后，`Phase1-AWQ-20261118T083931-3090` 退出 0、15/15 成功。9 次串行 batch=1 性能先导：TTFT P50/P95 0.1173/0.1198 s，E2E P50/P95 3.5436/3.5740 s，completion tokens/E2E 中位数 18.0608 token/s；250 ms 显存采样峰值 10,595 MiB。6 条自编输出未评分，不是质量评估。详见 [Phase1 报告](../reports/Phase1_validation.md) 与 [独立自查](../stage_artifacts/Phase1/SELF_CHECK.md)。
 - Phase1 按 runbook 标 PARTIAL：现有 AWQ 的 WikiText-2 test Parquet PPL 已实测；数据许可/去重、BF16 对照、GPTQ 可行性/实作、扩展性能矩阵及 token 级 ITL 仍缺。数据盘已扩至 100 GiB，BF16 下载与转换仍须逐步峰值空间审计。Phase2 依赖 Phase1 复核；在 Phase1 退出条件满足前不派发依赖的 GPU 阶段。
+- GPTQ 保留为独立的 Phase 1 可行性验证项：先做真实 BF16 局部专家量化和资源审计，完整转换仅在磁盘、显存和时长门槛通过后执行。AWQ 继续作为现有部署基线。见 [GPTQ 可行性计划](../stage_artifacts/Phase1/GPTQ_FEASIBILITY_PLAN.md)。用户计划后续增加一张 3090；在实际到位并验证分布式路径前，不计入当前资源。
 
 - 2026-11-18 00:58–01:05 Asia/Shanghai 交互登录确认 AutoDL 主机 `autodl-container-5fe44bab80-7925a7e9`；Ubuntu 22.04.5，单张 RTX 3090 24 GiB，登录时 0 MiB 显存占用、0% 利用率。系统盘可用约 32.00 GB，数据盘约 37.56 GB，均满足保留线。模型快照约 8.5 GiB，隔离 venv 与云端证据仍在数据盘。无明确实例剩余倒计时命令；用户此前估计约 5–6 小时。首轮 probe 真实加载 AWQ 后在 pre-hook kwargs 捕获失败；修复尚未复跑。
 - 2026-11-18 07:24–07:25 复查 SSH 36905 返回 TCP Connection refused，原连接被远端关闭；数据盘失败日志尚未拉回。该时点已接近用户预估可用窗口末端。继续需要同一实例恢复/延长或用户授权其他可用时长；未启动新 GPU。
