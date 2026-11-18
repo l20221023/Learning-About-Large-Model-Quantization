@@ -12,7 +12,7 @@
 | RTX 3090 上社区 AWQ checkpoint 的预训练模型加载和 Trace | [R] vLLM 0.26.0，Marlin WNA16 MoE，624 条原生路由记录，插桩前后 logits 最大差异 0。显存 250 ms 采样峰值 10,595 MiB。 | [3090 验收报告](../reports/M0-3_3090_AWQ_validation.md) |
 | 路由频率、负载、共激活和 Shared 调用 | [R] 社区 AWQ、三类自编小负载、6 prompts、169 个有效 token；26 层全部通过每层有效 token×6 与共激活上三角 token×15 不变量。Shared 模块 hook 156/156 次完整覆盖。探索性数据，不代表真实线上分布。 | [M0-4 自查](../reports/M0-4_validation.md) · [原始 trace 与聚合](../experiments/results/M0-4-20261117T235424-3090/) |
 | 官方 BF16 完整预训练模型 Trace、GPTQ、量化质量及长上下文／并发性能 | [U] AWQ 实测覆盖短请求 prefill，暂未验证原版 BF16 或 GPTQ。 | [兼容矩阵](../reports/compatibility_matrix.md) |
-| 同输入 Expert 输出相似度、加权贡献与组间差异 | [R] 社区 AWQ INT4 3090，第 13 层、两条自编提示、4 个 token；4/4 原生 Top-6 shadow 重构通过，16 条候选记录、24 条专家对记录。最大重构 relative L2 为 0.0002960364。仅小样本探索结果。 | [原始归档](../experiments/results/M0-5-full-20261118T075249-3090/) · [独立复核](../stage_artifacts/M0-5/FINAL_AUDIT.md) |
+| 同输入 Expert 输出相似度、加权贡献与组间差异 | [R] 社区 AWQ INT4 3090，第 13 层、两条自编提示、4 个 token；4/4 原生 Top-6 shadow 重构通过，16 条候选记录、24 条专家对记录。最大重构 relative L2 为 0.0002960364。仅小样本探索结果。 | [小型原始证据包](../stage_artifacts/M0-5/evidence.tar.gz) · [独立复核](../stage_artifacts/M0-5/FINAL_AUDIT.md) · [聚合 CSV](../stage_artifacts/M0-5/verified/) |
 | AutoDL 空间与缓存路径 | [R] `/` 30G free 约30G；`/root/autodl-tmp` 50G free 35G；安全保留线分别8/10 GiB。所有适用缓存变量已指向数据盘。完整官方BF16下载及转换峰值被安全预检拒绝。 | [存储审计报告](../reports/storage_audit_autodl_20261118.md) |
 | SERE 公开实验的精确 checkpoint 和环境，Brownout Lite Chat 的直接实验 | [E/U] M0-1 | Phase 2 / Phase 3 核实 |
 | 生成质量、校准后性能、显存、上下文长度和部署收益 | [U] | 后续基线及受控实验 |

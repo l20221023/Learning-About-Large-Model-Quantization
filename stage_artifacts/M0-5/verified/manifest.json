@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "row_count": 16,
+  "layer_id": 13,
+  "groups": [
+    "code",
+    "general"
+  ],
+  "samples": [
+    "code-01",
+    "general-01"
+  ],
+  "token_positions": [
+    1,
+    26,
+    33
+  ],
+  "frequency_classes": {
+    "6": "high",
+    "63": "high",
+    "25": "low",
+    "2": "low"
+  }
+}
