@@ -42,6 +42,8 @@
 
 ## Phase 1 接续实测与依赖门禁（2026-11-18）
 
+- 用户将现有数据盘扩至 100 GiB，并改用已配置的公钥非交互 SSH；严格主机密钥校验通过。总调度使用现有 3090、GPU 锁和磁盘守护完成社区 AWQ 的 WikiText-2 PPL。原始 ZIP 无法按固定 SHA 获取，改用 Salesforce 仓库固定提交的 test Parquet 并明确记录预处理与哈希；此单模型 PPL 不替代 BF16 对照。仍按 PARTIAL 门禁保留 Phase2 等待。
+
 - 用户重新提供 SSH 登录方式并确认现有 3090 时长足够。连接复用已保存 host key 的严格校验和交互式密码认证；未配置公钥，未将凭据写入项目文件。实际主机与之前相同，GPU 空闲，磁盘满足安全保留线；执行结束 GPU 已释放。
 - 首轮 OpenAI-compatible server Phase1 请求在 AWQ MLA prefill 报 `ColumnParallelLinear` 缺 `.weight` 并退出 1，失败包保留，不计入有效基线。in-process 2-token 与 64-token decode 探针通过后，为 server 配置固定 `max_model_len=256`、`max_num_batched_tokens=256`、`max_num_seqs=1`、512 MiB KV cache、关闭 prefix caching 并启用 eager mode；参数已用本机安装版 `vllm serve --help=all` 核实。新 run `Phase1-AWQ-20261118T083931-3090` 退出 0，15/15 成功，日志确认 AWQ Marlin 路径。
 - 这组证据仅支持社区 AWQ 单卡 batch=1 短请求功能和性能先导，不支持 BF16 加速比或正式质量结论。按 `P2_MASTER_RUNBOOK.md` 的 PARTIAL 门禁，未完成 held-out 质量/GPTQ/扩展性能条件前不启动依赖 Phase1 的 Phase2 GPU 工作。

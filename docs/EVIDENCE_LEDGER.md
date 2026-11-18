@@ -21,6 +21,11 @@
 
 ## 2026-11-18 总调度现场核验
 
+## 2026-11-18 Phase 1 AWQ PPL 补测
+
+- [R] 现有 RTX 3090、vLLM 0.26.0、社区 AWQ；WikiText-2 raw 配置 test Parquet 固定 `Salesforce/wikitext@b08601e04326c79dfdd32d625aee71d232d685c3`，文件 SHA-256 `5f1bea067869d04849c0f975a2b29c4ff47d867f484f5010ea5e861eab246d91`。原 S3 ZIP 不可获取，两个表示形式的逐字节同一性 UNKNOWN。
+- [R] `Phase1-PPL-full-20261118T095538-3090` 退出 0；303,877/303,877 token 唯一覆盖，PPL 13.40055990877775；原始分数重算一致。归档 SHA-256 `e8da033682c76af9d242822e2cc0f3919e1678cd3bbdd2ee871eb7fd5bf3ac8f`，见 [Phase1 PPL 原始包](../stage_artifacts/Phase1/evidence/Phase1-PPL-full-20261118T095538-3090.tar.gz) 及 [验收报告](../reports/Phase1_validation.md)。BF16 相对质量、GPTQ、扩展性能与正式质量置信范围仍 UNKNOWN；阶段 PARTIAL。
+
 | 问题 | 当前证据 | 验证安排 |
 |---|---|---|
 | AutoDL 连接、主机身份与当前资源 | [R] 2026-11-18 00:58 Asia/Shanghai 成功交互登录。StrictHostKeyChecking=yes 使用保存条目且无变更警告；GPU 为 RTX 3090 24 GiB，空闲；`/` 可用 31,998,771,200 B，`/root/autodl-tmp` 可用 37,565,026,304 B；现存 AWQ 快照约 8.5 GiB。实例精确剩余时间未获得，本轮按用户此前约 5–6 小时估计规划。 | M0-5 runner 启动前及长任务期间重新测余量，并启用既有 guard。 |

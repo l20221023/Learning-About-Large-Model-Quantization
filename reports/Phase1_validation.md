@@ -58,9 +58,17 @@ bash ./run_phase1_awq_autodl.sh
 
 ## 未完成项与阶段出口
 
-1. 缺少正式 held-out 语料、数据许可/去重核验、PPL 或等价评分、失败案例评分和质量置信范围；BF16 原始模型对照仍受存储门槛约束。
+1. 已有固定 WikiText-2 raw 配置 test Parquet 的单模型 PPL（见下）；数据许可/去重核验、失败案例评分、质量置信范围及 BF16 对照仍未完成。
 2. 未执行自主 GPTQ W4A16；未完成转换显存、峰值磁盘、校准数据与耗时的定量可行性审计。不得把社区 AWQ 说成 GPTQ 结果。
 3. 尚无 batch、输入长度、长上下文、并发/到达率扩展矩阵；未验证 token 级 ITL/TPOT。
 4. 结论只适用于本社区 AWQ checkpoint、当前 vLLM/Marlin 路径和小型自编请求集。
 
 根据 `docs/P2_MASTER_RUNBOOK.md` 的状态定义，**PARTIAL 不能进入依赖阶段**。在上述核心 Phase 1 缺项完成，或总调度经授权正式修订研究范围并确认新的退出条件前，Phase 2 GPU 任务保持未派发。
+
+## 2026-11-18 WikiText-2 AWQ PPL 补测
+
+原始 S3 ZIP 目前返回重定向/403，未得到预期 ZIP SHA。因此改用 Salesforce 官方仓库 `wikitext-2-raw-v1` test Parquet 固定提交 `b08601e04326c79dfdd32d625aee71d232d685c3`，经镜像下载，文件 SHA-256 与该提交响应的 `x-linked-etag` 均为 `5f1bea067869d04849c0f975a2b29c4ff47d867f484f5010ea5e861eab246d91`。4,358 条 `text` 记录按原有换行保留，无换行的记录补 `\n` 后串接；重建流 1,289,123 bytes，SHA-256 `7952b062817620ac99b47296dc945942b55068d0e85baf1f95f300c7ad1480ef`。此格式没有证明与不可获取的原 ZIP test 文件逐字节相同，跨报告比较须固定此预处理。
+
+3090、vLLM 0.26.0、现有 AWQ checkpoint；`max_model_len=257`、256 token 窗口、128 stride、`prompt_logprobs=1`、无 Chat Template/BOS/EOS。一个窗口 smoke 获 255 个有效目标 logprob。全量 run `Phase1-PPL-full-20261118T095538-3090` 退出 0，2,374 窗口、303,878 token、303,877 个目标各计一次，NLL 总和 788,650.9115892971，**PPL 13.40055990877775**。独立从原始逐 token logprob 重算目标位置集合 1..303877 且无重复，PPL 与 manifest 一致。单模型结果不能推断 BF16 相对退化。
+
+[原始归档](../stage_artifacts/Phase1/evidence/Phase1-PPL-full-20261118T095538-3090.tar.gz) SHA-256 `e8da033682c76af9d242822e2cc0f3919e1678cd3bbdd2ee871eb7fd5bf3ac8f`，内含 manifest、2,374 行原始分数、GPU CSV、前后磁盘/GPU、输入和输出哈希、日志、退出码。原始分数 SHA-256 `188439a90cf308a2526e022000b2905fa4f8c605280b82ee2341e3be7c0946a2`。扩容后数据盘 100 GiB；运行前 91,064,856,576 B 可用，2 GiB 峰值预检和持续保护通过，结束 GPU 0 MiB。阶段维持 **PARTIAL**。
