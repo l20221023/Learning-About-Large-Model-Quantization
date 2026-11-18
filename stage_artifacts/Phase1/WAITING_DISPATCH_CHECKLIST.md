@@ -1,10 +1,12 @@
-# Phase 1 待派发执行清单
+# Phase 1 初始派发执行清单（历史快照）
 
-**状态：WAITING_DISPATCH。** 本文件仅准备清单；未运行 Phase 1 实验、未占用 GPU。收到总调度会话明确派发，并完成下列前置复核后才执行。
+> **已被后续执行取代。** M0-5 已由总调度复核 PASS；Phase 1 已在现有 3090 执行 AWQ 探针和短请求先导，当前为 PARTIAL。以下未勾选项表示最初规划中未完成或后续仍阻塞的项目；当前证据与状态以 `SELF_CHECK.md`、`STATUS.md` 和 `../../reports/Phase1_validation.md` 为准。Phase 2 仍因 Phase 1 PARTIAL 保持未派发。
+
+**状态：历史派发前快照。** 当时 GPU 工作等待安全交互接入；后续执行状态见 `BASELINE_SPEC.md` 和 `STATUS.md`。
 
 ## 1. 输入与证据边界
 
-- [ ] 复核 `docs/PLAN.md`、`docs/P2_MASTER_RUNBOOK.md` Phase 1、M0-1 至 M0-5 报告及原始数据。M0-5 当前报告为 **BLOCKED**，须先完成真实 shadow forward、归档并由总调度复核通过。
+- [x] 复核 `docs/PLAN.md`、`docs/P2_MASTER_RUNBOOK.md` Phase 1、M0-1 至 M0-5 报告及原始数据。**初始清单时** M0-5 尚标 BLOCKED；后续真实 shadow forward、归档与总调度独立复核已通过，见 `../M0-5/FINAL_AUDIT.md`。
 - [ ] 固定官方模型 `deepseek-ai/DeepSeek-V2-Lite-Chat@85864749cd611b4353ce1decdb286193298f64c7`；固定已有社区 `TechxGenus/DeepSeek-V2-Lite-Chat-AWQ@e9fdf80ec6f1d200a029c41004bee40993763b43`。记录配置、分片哈希、tokenizer、Chat Template、许可证/使用条件和运行后端版本。
 - [ ] 将社区 AWQ 标为公开 checkpoint 的实测路径，不标为本项目自主量化产物；官方 BF16 的 Header/架构证据不等于完整权重已可运行。
 

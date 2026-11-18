@@ -1,0 +1,14 @@
+{
+  "requests": 15,
+  "successful": 15,
+  "failed": 0,
+  "perf_successful": 9,
+  "ttft_s_p50": 0.11731665581464767,
+  "ttft_s_p95": 0.11983826085925102,
+  "e2e_s_p50": 3.543585240840912,
+  "e2e_s_p95": 3.574036554992199,
+  "tokens_per_e2e_s_median": 18.0608044255237,
+  "token_rate_sample_count": 9,
+  "itl_tpot": null,
+  "itl_reason": "SSE chunks lack verified one-token-per-event mapping"
+}

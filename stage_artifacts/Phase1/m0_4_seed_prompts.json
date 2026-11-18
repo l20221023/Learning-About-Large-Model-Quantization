@@ -1,0 +1,22 @@
+{
+  "workload_id": "m0-4-curated-seed-v1",
+  "provenance": "Prompts authored for this project by the experiment operator; no external corpus or user data. Exploratory fixtures only, not a representative production distribution.",
+  "seed": 20261117,
+  "chat_template": "tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True)",
+  "eos": "Tokenizer-defined chat template; no forced EOS in prompt; one greedy output token requested for logits parity.",
+  "phase": "prefill",
+  "groups": {
+    "general": [
+      "Explain why a water bottle sweats on the outside on a warm day. Give two short reasons.",
+      "Create a three-step checklist for preparing a small garden before planting herbs."
+    ],
+    "chinese": [
+      "请用三点说明，阅读完一本书后如何整理自己的读书笔记。",
+      "给第一次乘坐地铁的游客写一段简短提示，说明如何换乘并注意安全。"
+    ],
+    "code": [
+      "Write a Python function that returns the first duplicate integer in a list, or None if no value repeats. Include a short example call.",
+      "Review this loop for an off-by-one error and explain the fix: for i in range(1, len(items)): print(items[i])"
+    ]
+  }
+}

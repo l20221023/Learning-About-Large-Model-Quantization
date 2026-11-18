@@ -39,3 +39,9 @@
 - 实例恢复连接后，M0-5 两次失败探针及后续成功探针、正式运行均保留退出码和原始日志。第二次失败暴露独立调用缺 vLLM forward context。最终使用单设备 context，在 shared 专家合并前截取 routed 输出，令原生与 shadow 共享同一观测点。
 - 正式 AWQ 3090 运行 `M0-5-full-20261118T075249-3090` 退出 0；4/4 个采样 token 通过 Top-6 routed 输出重构。结果限定社区 AWQ、第 13 层、两条自编提示，不能外推 BF16、专家合并安全性或整模型质量。原始包与独立审计见 `experiments/results/M0-5-full-20261118T075249-3090/`、`stage_artifacts/M0-5/FINAL_AUDIT.md`。
 - M0-5 通过总调度复核后已派发 Phase 1；仍只使用现有 3090 和既有 AWQ 权重，GPU 串行锁为 `/root/autodl-tmp/p2-3090.lock`。官方 BF16 权重下载与转换继续受容量和授权门槛约束。
+
+## Phase 1 接续实测与依赖门禁（2026-11-18）
+
+- 用户重新提供 SSH 登录方式并确认现有 3090 时长足够。连接复用已保存 host key 的严格校验和交互式密码认证；未配置公钥，未将凭据写入项目文件。实际主机与之前相同，GPU 空闲，磁盘满足安全保留线；执行结束 GPU 已释放。
+- 首轮 OpenAI-compatible server Phase1 请求在 AWQ MLA prefill 报 `ColumnParallelLinear` 缺 `.weight` 并退出 1，失败包保留，不计入有效基线。in-process 2-token 与 64-token decode 探针通过后，为 server 配置固定 `max_model_len=256`、`max_num_batched_tokens=256`、`max_num_seqs=1`、512 MiB KV cache、关闭 prefix caching 并启用 eager mode；参数已用本机安装版 `vllm serve --help=all` 核实。新 run `Phase1-AWQ-20261118T083931-3090` 退出 0，15/15 成功，日志确认 AWQ Marlin 路径。
+- 这组证据仅支持社区 AWQ 单卡 batch=1 短请求功能和性能先导，不支持 BF16 加速比或正式质量结论。按 `P2_MASTER_RUNBOOK.md` 的 PARTIAL 门禁，未完成 held-out 质量/GPTQ/扩展性能条件前不启动依赖 Phase1 的 Phase2 GPU 工作。

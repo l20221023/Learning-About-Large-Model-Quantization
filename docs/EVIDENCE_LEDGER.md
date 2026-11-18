@@ -11,6 +11,8 @@
 | 官方 tokenizer 和 Chat Template | [R] 固定文件生成 25 个 token，过滤后 24 个普通 token | [Manifest](../experiments/results/M0-3-20261117T0951529190-native-final/trace/manifest.json) |
 | RTX 3090 上社区 AWQ checkpoint 的预训练模型加载和 Trace | [R] vLLM 0.26.0，Marlin WNA16 MoE，624 条原生路由记录，插桩前后 logits 最大差异 0。显存 250 ms 采样峰值 10,595 MiB。 | [3090 验收报告](../reports/M0-3_3090_AWQ_validation.md) |
 | 路由频率、负载、共激活和 Shared 调用 | [R] 社区 AWQ、三类自编小负载、6 prompts、169 个有效 token；26 层全部通过每层有效 token×6 与共激活上三角 token×15 不变量。Shared 模块 hook 156/156 次完整覆盖。探索性数据，不代表真实线上分布。 | [M0-4 自查](../reports/M0-4_validation.md) · [原始 trace 与聚合](../experiments/results/M0-4-20261117T235424-3090/) |
+| 社区 AWQ 短请求功能与性能先导 | [R] 固定 AWQ revision、3090、vLLM 0.26.0；短配置下 15/15 请求成功，6 条未评分探索输出、9 次串行 batch=1×64-token 性能请求。TTFT P50/P95 0.1173/0.1198 s，E2E 3.5436/3.5740 s，completion tokens/E2E 中位数 18.0608 token/s；GPU 250 ms 采样峰值 10,595 MiB。仅探索先导，非正式质量或 BF16 对照。 | [Phase1 报告](../reports/Phase1_validation.md) · [自查](../stage_artifacts/Phase1/SELF_CHECK.md) · [原始证据包](../stage_artifacts/Phase1/evidence/) |
+| Phase 1 正式量化/质量完整基线 | [U/BLOCKED] 无 held-out 数据及许可核实、PPL/评分与置信范围；未执行自主 GPTQ 量化；无 batch/长度/并发扩展矩阵或 token 级 ITL/TPOT。Phase1 状态 PARTIAL。 | 完成 Phase1 退出项前不派发依赖的 Phase2 GPU 工作；BF16 权重下载仍需空间峰值审计与授权。 |
 | 官方 BF16 完整预训练模型 Trace、GPTQ、量化质量及长上下文／并发性能 | [U] AWQ 实测覆盖短请求 prefill，暂未验证原版 BF16 或 GPTQ。 | [兼容矩阵](../reports/compatibility_matrix.md) |
 | 同输入 Expert 输出相似度、加权贡献与组间差异 | [R] 社区 AWQ INT4 3090，第 13 层、两条自编提示、4 个 token；4/4 原生 Top-6 shadow 重构通过，16 条候选记录、24 条专家对记录。最大重构 relative L2 为 0.0002960364。仅小样本探索结果。 | [小型原始证据包](../stage_artifacts/M0-5/evidence.tar.gz) · [独立复核](../stage_artifacts/M0-5/FINAL_AUDIT.md) · [聚合 CSV](../stage_artifacts/M0-5/verified/) |
 | AutoDL 空间与缓存路径 | [R] `/` 30G free 约30G；`/root/autodl-tmp` 50G free 35G；安全保留线分别8/10 GiB。所有适用缓存变量已指向数据盘。完整官方BF16下载及转换峰值被安全预检拒绝。 | [存储审计报告](../reports/storage_audit_autodl_20261118.md) |
@@ -30,3 +32,10 @@
 | 阶段调度与 GPU 串行 | [R] 已建立 M0-5、Phase 1–6 七个独立 Codex 会话；M0-5 当前 BLOCKED，Phase 1–6 为待派发队列，未并发占用 GPU。 | 总调度复核前序代码、日志、原始数据、复现命令、资源和限制后，逐个派发依赖阶段；保持单 3090 锁。 |
 
 2026-11-18 08:19 接续更新：实例已重新可达，3090 空闲；M0-5 正式运行与独立复核均 PASS，前述 07:24 的连接阻塞为历史状态。Phase 1 已派发。M0-5 证据包 SHA-256 为 `61d7662d8bd69dd332c16f5451948251f6f7e27ac982d36ac865dee94d35c745`；逐元素 allclose 只在 GPU 端判定，原始 JSON 未保存输出向量，因此离线不能重算该逐元素门槛。
+
+## 2026-11-18 Phase 1 3090 实测复核
+
+- SSH StrictHostKeyChecking=yes 成功复连同一实例，主机密钥未变化；登录时单卡 RTX 3090 空闲，`/` 可用 31,998,705,664 B，`/root/autodl-tmp` 可用 37,557,784,576 B。AutoDL banner 未给精确剩余时长；用户确认时长足够。所有 GPU run 均使用单实例 `/root/autodl-tmp/p2-3090.lock` 与存储守护。
+- in-process 2-token 和 64-token decode probe 分别 PASS；两者只证明相应配置下可生成，不能视为质量结论或正式性能样本。`Phase1-AWQ-20261118T082549-3090` 失败退出 1，15 个服务请求 8 个失败，原始失败包保留。
+- `Phase1-AWQ-20261118T083931-3090` 退出 0，15/15 请求成功。9 个 batch=1 串行性能样本为 64 tokens：TTFT P50/P95 0.1173167/0.1198383 s，E2E 3.5435852/3.5740366 s，completion-token/E2E 中位数 18.0608 token/s。GPU 250 ms 采样峰值 10,595 MiB/15%，结束 0 MiB；系统盘保持约 31,998,570,496 B，数据盘由 37,557,579,776 B 减至 37,557,469,184 B。
+- 正式输出是六条自编提示的未评分观察；held-out/PPL、许可及置信范围、官方 BF16 对照、自主 GPTQ、扩展 batch/长度/并发矩阵和 ITL/TPOT 均 UNKNOWN/BLOCKED。Phase1 状态 PARTIAL；依据 runbook 状态定义，依赖阶段 Phase2 暂不派发。原始证据索引与阶段报告见 [Phase1 验收报告](../reports/Phase1_validation.md)、[阶段自查](../stage_artifacts/Phase1/SELF_CHECK.md) 及压缩包 SHA 列表。
