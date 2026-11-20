@@ -49,6 +49,17 @@
 6. 不同 clone/worktree 先检查脏文件，再 fetch、比较提交关系；干净且可快进时才 pull --ff-only，分叉经审查合并/PR，不强推、不硬重置。步骤见 `docs/project_management/INITIALIZATION.md`。
 7. 实验前使用现有锁并核对 GPU/服务；TP=2 必须有两卡窗口。不停止别人的任务，不同时加载冲突模型。本轮未远程登录、推理、启停服务或启动 GPU 作业。
 8. 大权重、缓存、大型日志留在指定磁盘；Git 保存轻量 manifest、哈希、摘要和位置。凭据不得进入状态、日志、脚本或提交。
+9. 每项任务开始检查本地 `AGENTS.md` 与本文件；结束写任务 ID、验收状态、实测结论、未完成项、证据路径和更新时间。对已完成工作先核对证据，不为同步重复运行。
+10. 发布前只暂存状态和必要的小型审计摘要，比较远端分支与本地历史并保护其他任务改动；远端 SHA 验证成功才记作已同步。只允许轻量摘要入 Git，权重、原始大型数据、密钥和敏感配置严禁上传。推送失败如实记录。
+
+### 最近一次 BF16 Offloading / Trace / Cache 状态核对
+
+- 更新：2026-11-20 20:00（Asia/Shanghai）；任务 ID：O1/O2，涉及 `OffloadGate-BF16-decode-20261120T172330`。代码证据提交：`f492352f098197d4a5ecebb92fa18ee8339a45f8`。
+- O1：PARTIAL。V1/UVA20 单卡固定短窗功能/因果验证已记录，逐 token 容差与完整质量/长期稳定性仍未验收；详见 `reports/offloading_gpu_causal_validation.md`。
+- O2 Task B：限定范围 PASS；6 个请求输出 parity，26 层 Top-6 trace，4836 decode rows；插桩额外开销 20.15%。保留 PyTorch build 导致的一个 softmax BF16 ULP 差异及未持久化逐层 backend inventory 限制。
+- O2 Task C：离线缓存模拟与 18 个策略/容量单元独立复算一致，限定范围 PASS。六条提示与冷 cache 假设限制外推；传输字节是理论值，不是 PCIe 实测。
+- 未完成：O1 数值门槛/稳定性；真实在线缓存延迟与通用请求覆盖；O2 runtime 局部证据与缓存模拟的人工验收。具体审查记录见 `task_status/O2.md` 与 `reports/o2_acceptance_and_u1_readiness.md`（状态文件由 O2 所有者维护）。
+- 更新来源：本轮只读取刚提交的报告、O2 状态及审查摘要，没有重复实验或重跑审计。
 
 ## Repository / synchronization snapshot
 
