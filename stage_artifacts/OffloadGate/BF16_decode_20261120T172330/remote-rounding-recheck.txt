@@ -1,0 +1,4 @@
+torch 2.11.0+cu130 original_prefill_batch_shape (27, 64) cuda_initialized_before False
+fp32_candidate FAIL: native selected weights differ from unnormalized softmax probabilities
+bf16_candidate PASS batch_rows 27 sequence_index 10 expert 21 remote_bf16 0.029052734375 captured_weight 0.029052734375 max_abs_batch_diff 0.0
+cuda_initialized_after False

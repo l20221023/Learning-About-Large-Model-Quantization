@@ -1,0 +1,13 @@
+start=2026-11-20T17:25:14+08:00
+run_id=OffloadGate-BF16-decode-20261120T172330
+physical_gpu=0
+CUDA_VISIBLE_DEVICES=0
+tensor_parallel_size=1
+VLLM_USE_V2_MODEL_RUNNER=0
+VLLM_ENABLE_V1_MULTIPROCESSING=0
+offload_backend=uva
+cpu_offload_gb=20
+tmux_session=offload-bf16-decode-20261120T172330
+command=flock both project locks + autodl_storage_guard run 2GiB
+end=2026-11-20T17:27:39+08:00
+exit=0

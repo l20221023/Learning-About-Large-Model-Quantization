@@ -33,3 +33,9 @@
 - 2026-11-18 07:24–07:25 复查 SSH 36905 返回 TCP Connection refused，原连接被远端关闭；数据盘失败日志尚未拉回。该时点已接近用户预估可用窗口末端。继续需要同一实例恢复/延长或用户授权其他可用时长；未启动新 GPU。
 - 已保存的 `[connect.nmb2.seetacloud.com]:36905` 主机密钥条目存在，严格校验登录未出现变更警告。只使用了交互密码认证并禁用公钥；凭据未写入命令、环境或文件。
 - 本地首次基线为 `def624fd53e18a4d230bd2ec7f592e23a2569b7b`；本轮 M0-5 修复和 BLOCKED 证据已本地提交到 `2f3144a8829f77084819374dfcbe6eb28a54c414`，工作区干净。远端查询/push 本轮均未返回可确认的 ref 或成功响应，远端 SHA 与是否已发布仍未知；不 force push，也不宣称已发布。首次提交未重做。
+## 2026-11-20 Offloading Feasibility Gate 补充
+
+- Task A 的单卡 BF16 功能基线现已完成：官方固定 revision、vLLM 0.26.0 V1、RTX 3090 GPU0、TP=1、UVA 20 GiB，256-token 固定输入成功前向；连续 decode 的服务先导为 9/9 请求成功。历史 V2 NoopOffloader OOM 与 V1 实际 UVA 成功路径已分别留证。CPU eager/UVA 的 255 个目标 token 对齐，但 logprob 平均绝对差 0.051683、最大 0.507828；项目未事先冻结可接受数值容差，故 Task A 的质量/数值验收仍 **PARTIAL**，不能写成逐 token 精确通过。
+- Task B **PASS（限定范围）**：固定 workload 下完成真实 BF16 连续 decode trace，6 条提示、每条 32 个输出 token、31 decode steps，26 层 Top-6，共 4,836 decode 路由行；插桩与未插桩输出一致。Task C **PASS（离线模拟范围）**：基于该 trace 独立复算 LRU/LFU/static-hot 共 18 组缓存结果。小样本 trace、冷缓存和理论传输字节不代表线上缓存延迟或 TPOT。
+- 自查、原始日志、失败记录、独立审计与复现入口见 [Offloading Gate 报告](../reports/bf16_uva_decode_and_cache_analysis.md) 及 stage_artifacts/OffloadGate/BF16_decode_20261120T172330/。2026-11-20 17:44:53 退出后两卡 0 MiB、项目锁空闲；这是已记录时点快照，不代表之后的实时状态。
+- Gate 整体维持 **PARTIAL**，原因仅为 Task A 数值验收边界未闭合。后续先依据现有 CPU/UVA 对照和项目质量要求冻结数值验收规则；在此之前，不把 B/C 的结果外推为动态 expert cache 收益，也不启动缓存管理器实现。

@@ -44,3 +44,9 @@
 - in-process 2-token 和 64-token decode probe 分别 PASS；两者只证明相应配置下可生成，不能视为质量结论或正式性能样本。`Phase1-AWQ-20261118T082549-3090` 失败退出 1，15 个服务请求 8 个失败，原始失败包保留。
 - `Phase1-AWQ-20261118T083931-3090` 退出 0，15/15 请求成功。9 个 batch=1 串行性能样本为 64 tokens：TTFT P50/P95 0.1173167/0.1198383 s，E2E 3.5435852/3.5740366 s，completion-token/E2E 中位数 18.0608 token/s。GPU 250 ms 采样峰值 10,595 MiB/15%，结束 0 MiB；系统盘保持约 31,998,570,496 B，数据盘由 37,557,579,776 B 减至 37,557,469,184 B。
 - 正式输出是六条自编提示的未评分观察；held-out/PPL、许可及置信范围、官方 BF16 对照、自主 GPTQ、扩展 batch/长度/并发矩阵和 ITL/TPOT 均 UNKNOWN/BLOCKED。Phase1 状态 PARTIAL；依据 runbook 状态定义，依赖阶段 Phase2 暂不派发。原始证据索引与阶段报告见 [Phase1 验收报告](../reports/Phase1_validation.md)、[阶段自查](../stage_artifacts/Phase1/SELF_CHECK.md) 及压缩包 SHA 列表。
+## 2026-11-20 Offloading Feasibility Gate 补充
+
+- [R] 官方 BF16 固定 revision、vLLM 0.26.0 V1、单张 RTX 3090、TP=1、UVA 20 GiB 成功完成 256-token 输入前向；固定 CPU eager 对照的 255/255 target token ID 对齐，logprob MAE 0.051683、最大绝对差 0.507828，首窗 PPL CPU 9.174645、UVA 9.184654。数值容差未预先冻结，Task A 功能 PASS、数值/质量验收 PARTIAL。证据：[offloading_gpu_causal_validation.md](../reports/offloading_gpu_causal_validation.md)、[bf16_uva_decode_and_cache_analysis.md](../reports/bf16_uva_decode_and_cache_analysis.md)。
+- [R] BF16 连续 decode trace：6 个冻结提示，每条 32 个输出 token/31 decode steps，26 层 Top-6，4,836 decode rows；插桩与基线 token IDs、文本和 finish reason 相符。Trace SHA-256 dbe9920be8ecbfa8b6828e12d8c8921a53933c001b5ae02b001693b6f7a66993。限定为小样本实际 trace，不代表一般流量分布。
+- [R/D] LRU、LFU 与 static-hot 在每层容量 6/8/12/16/32/64 的 18 组结果由独立 CPU 实现复算一致。每 expert 字节数为 17,301,504 的等大小假设；miss bytes 是理论值，不是 PCIe 传输量或延迟实测。原始 trace、模拟结果和独立审计见 stage_artifacts/OffloadGate/BF16_decode_20261120T172330/。
+- [R] 2026-11-20 17:44:53 远端退出快照显示两卡 0 MiB、项目锁空闲、磁盘 guard 通过；该资源快照是历史观测，不作为当前在线状态。

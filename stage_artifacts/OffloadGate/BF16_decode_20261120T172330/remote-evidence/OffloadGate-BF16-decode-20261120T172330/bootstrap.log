@@ -1,0 +1,81 @@
++ trap 'rc=$?; echo "wrapper error line=$LINENO exit=$rc"; exit "$rc"' ERR
+++ date -Is
++ printf 'start=%s\nrun_id=%s\nphysical_gpu=0\nCUDA_VISIBLE_DEVICES=0\ntensor_parallel_size=1\nVLLM_USE_V2_MODEL_RUNNER=0\nVLLM_ENABLE_V1_MULTIPROCESSING=0\noffload_backend=uva\ncpu_offload_gb=20\ntmux_session=offload-bf16-decode-20261120T172330\ncommand=flock both project locks + autodl_storage_guard run 2GiB\n' 2026-11-20T17:25:14+08:00 OffloadGate-BF16-decode-20261120T172330
++ cd /root/autodl-tmp/p2-offloadgate-bf16-decode-20261120T172330
++ source /root/autodl-tmp/p2-deepseek-moe/autodl_storage_env.sh
+++ AUTODL_DATA_ROOT=/root/autodl-tmp
+++ P2_WORK_ROOT=/root/autodl-tmp/p2-deepseek-moe
+++ export HF_HOME=/root/autodl-tmp/cache/huggingface
+++ HF_HOME=/root/autodl-tmp/cache/huggingface
+++ export HF_HUB_CACHE=/root/autodl-tmp/cache/huggingface/hub
+++ HF_HUB_CACHE=/root/autodl-tmp/cache/huggingface/hub
+++ export HUGGINGFACE_HUB_CACHE=/root/autodl-tmp/cache/huggingface/hub
+++ HUGGINGFACE_HUB_CACHE=/root/autodl-tmp/cache/huggingface/hub
+++ export MODELSCOPE_CACHE=/root/autodl-tmp/cache/modelscope
+++ MODELSCOPE_CACHE=/root/autodl-tmp/cache/modelscope
+++ export XDG_CACHE_HOME=/root/autodl-tmp/cache/xdg
+++ XDG_CACHE_HOME=/root/autodl-tmp/cache/xdg
+++ export TORCH_HOME=/root/autodl-tmp/cache/torch
+++ TORCH_HOME=/root/autodl-tmp/cache/torch
+++ export PIP_CACHE_DIR=/root/autodl-tmp/cache/pip
+++ PIP_CACHE_DIR=/root/autodl-tmp/cache/pip
+++ export TMPDIR=/root/autodl-tmp/tmp
+++ TMPDIR=/root/autodl-tmp/tmp
+++ export TRITON_CACHE_DIR=/root/autodl-tmp/cache/triton
+++ TRITON_CACHE_DIR=/root/autodl-tmp/cache/triton
+++ export MPLCONFIGDIR=/root/autodl-tmp/cache/matplotlib
+++ MPLCONFIGDIR=/root/autodl-tmp/cache/matplotlib
+++ export P2_MODELS_DIR=/root/autodl-tmp/p2-deepseek-moe/models
+++ P2_MODELS_DIR=/root/autodl-tmp/p2-deepseek-moe/models
+++ export P2_EXPERIMENTS_DIR=/root/autodl-tmp/experiments
+++ P2_EXPERIMENTS_DIR=/root/autodl-tmp/experiments
+++ export P2_LOGS_DIR=/root/autodl-tmp/logs
+++ P2_LOGS_DIR=/root/autodl-tmp/logs
+++ export P2_TMP_DIR=/root/autodl-tmp/tmp
+++ P2_TMP_DIR=/root/autodl-tmp/tmp
+++ mkdir -p /root/autodl-tmp/models /root/autodl-tmp/cache /root/autodl-tmp/experiments /root/autodl-tmp/logs /root/autodl-tmp/tmp /root/autodl-tmp/cache/huggingface/hub /root/autodl-tmp/cache/modelscope /root/autodl-tmp/cache/xdg /root/autodl-tmp/cache/torch /root/autodl-tmp/cache/pip /root/autodl-tmp/cache/triton /root/autodl-tmp/cache/matplotlib
++ export WORK BASE SNAPSHOT PY VLLM RUN OUT LOG GPU
++ exec
++ flock -n 8
++ exec
++ flock -n 9
+++ nvidia-smi -i 0 --query-gpu=uuid --format=csv,noheader,nounits
+++ tr -d '\r '
++ uuid=GPU-4a84eb8d-c6a0-d81d-53c3-4c5f4b8ddacc
+++ nvidia-smi -i 0 --query-gpu=memory.used --format=csv,noheader,nounits
+++ tr -d '\r '
++ used=0
++ [[ 0 =~ ^[0-9]+$ ]]
++ [[ 0 -lt 100 ]]
++ nvidia-smi --query-compute-apps=gpu_uuid --format=csv,noheader,nounits
++ grep -Fxq GPU-4a84eb8d-c6a0-d81d-53c3-4c5f4b8ddacc
++ df -B1 / /root/autodl-tmp
++ free -b
++ nvidia-smi -i 0
++ nvidia-smi -i 1
++ nvidia-smi -L
++ /root/autodl-tmp/p2-deepseek-moe/autodl_storage_guard.sh check 2147483648
++ sha256sum /root/autodl-tmp/p2-offloadgate-bf16-decode-20261120T172330/trace_bf16_decode.py /root/autodl-tmp/p2-offloadgate-bf16-decode-20261120T172330/audit_bf16_decode_trace.py /root/autodl-tmp/p2-offloadgate-bf16-decode-20261120T172330/run_bf16_decode_autodl.sh /root/autodl-tmp/p2-offloadgate-bf16-decode-20261120T172330/workloads/m0_4_seed_prompts.json
++ sha256sum /root/autodl-tmp/p2-deepseek-moe/models/DeepSeek-V2-Lite-Chat-BF16-85864749/config.json /root/autodl-tmp/p2-deepseek-moe/models/DeepSeek-V2-Lite-Chat-BF16-85864749/model.safetensors.index.json /root/autodl-tmp/p2-deepseek-moe/models/DeepSeek-V2-Lite-Chat-BF16-85864749/tokenizer_config.json /root/autodl-tmp/p2-deepseek-moe/models/DeepSeek-V2-Lite-Chat-BF16-85864749/metadata-sha256.txt
++ /root/autodl-tmp/p2-deepseek-moe/venv-vllm-0.26.0/bin/python -m pip freeze
++ /root/autodl-tmp/p2-deepseek-moe/venv-vllm-0.26.0/bin/vllm --version
++ uname -a
++ cat
++ chmod +x /root/autodl-tmp/experiments/OffloadGate-BF16-decode-20261120T172330/inner.sh
++ set +e
++ /root/autodl-tmp/p2-deepseek-moe/autodl_storage_guard.sh run 2147483648 -- bash /root/autodl-tmp/experiments/OffloadGate-BF16-decode-20261120T172330/inner.sh
++ status=0
++ set -e
++ [[ ! -f /root/autodl-tmp/experiments/OffloadGate-BF16-decode-20261120T172330/exit ]]
+++ date -Is
++ printf 'end=%s\nexit=%s\n' 2026-11-20T17:27:39+08:00 0
++ df -B1 / /root/autodl-tmp
++ free -b
++ nvidia-smi -i 0
++ nvidia-smi -i 1
++ find /root/autodl-tmp/experiments/OffloadGate-BF16-decode-20261120T172330 /root/autodl-tmp/logs/OffloadGate-BF16-decode-20261120T172330 -type f '!' -name sha256.txt -print0
++ sort -z
++ xargs -0r sha256sum
++ echo 'run_id=OffloadGate-BF16-decode-20261120T172330 out=/root/autodl-tmp/experiments/OffloadGate-BF16-decode-20261120T172330 logs=/root/autodl-tmp/logs/OffloadGate-BF16-decode-20261120T172330 exit=0'
+run_id=OffloadGate-BF16-decode-20261120T172330 out=/root/autodl-tmp/experiments/OffloadGate-BF16-decode-20261120T172330 logs=/root/autodl-tmp/logs/OffloadGate-BF16-decode-20261120T172330 exit=0
++ exit 0

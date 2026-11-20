@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "formal_requests": 6,
+  "prompt_tokens_by_request": {
+    "general-01": 27,
+    "general-02": 22,
+    "chinese-01": 24,
+    "chinese-02": 28,
+    "code-01": 34,
+    "code-02": 40
+  },
+  "output_tokens_by_request": {
+    "general-01": 32,
+    "general-02": 32,
+    "chinese-01": 32,
+    "chinese-02": 32,
+    "code-01": 32,
+    "code-02": 32
+  },
+  "decode_steps_by_request": {
+    "general-01": 31,
+    "general-02": 31,
+    "chinese-01": 31,
+    "chinese-02": 31,
+    "code-01": 31,
+    "code-02": 31
+  },
+  "prefill_rows": 4550,
+  "decode_rows": 4836,
+  "layers": 26,
+  "experts": 64,
+  "top_k": 6,
+  "cache_sim_schema_valid": true,
+  "decode_step_semantics": "step 0 consumes generated output token 0 and predicts output token 1; prefill predicts output token 0",
+  "decode_trace_sha256": "dbe9920be8ecbfa8b6828e12d8c8921a53933c001b5ae02b001693b6f7a66993"
+}

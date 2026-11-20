@@ -1,0 +1,1 @@
+local_torch 2.12.0+cpu batch_shape (27, 64) sequence_index=10 expert=21 bf16_softmax 0.0289306640625 captured_weight 0.029052734375 difference 0.0001220703125

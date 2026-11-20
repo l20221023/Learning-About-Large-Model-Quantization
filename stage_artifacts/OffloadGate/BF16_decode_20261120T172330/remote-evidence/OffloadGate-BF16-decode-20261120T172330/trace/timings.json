@@ -1,0 +1,51 @@
+{
+  "request_timings": [
+    {
+      "sample_id": "general-01",
+      "baseline_seconds": 5.147146619856358,
+      "instrumented_seconds": 5.938564952462912,
+      "added_seconds": 0.791418332606554,
+      "relative_overhead": 0.15375865329995997
+    },
+    {
+      "sample_id": "general-02",
+      "baseline_seconds": 5.085122432559729,
+      "instrumented_seconds": 5.9799690917134285,
+      "added_seconds": 0.8948466591536999,
+      "relative_overhead": 0.17597347379957884
+    },
+    {
+      "sample_id": "chinese-01",
+      "baseline_seconds": 5.100817807018757,
+      "instrumented_seconds": 6.762178782373667,
+      "added_seconds": 1.66136097535491,
+      "relative_overhead": 0.32570482581614013
+    },
+    {
+      "sample_id": "chinese-02",
+      "baseline_seconds": 5.14915980771184,
+      "instrumented_seconds": 6.373451244086027,
+      "added_seconds": 1.2242914363741875,
+      "relative_overhead": 0.23776528251086315
+    },
+    {
+      "sample_id": "code-01",
+      "baseline_seconds": 5.155380312353373,
+      "instrumented_seconds": 6.008471507579088,
+      "added_seconds": 0.8530911952257156,
+      "relative_overhead": 0.1654758996502217
+    },
+    {
+      "sample_id": "code-02",
+      "baseline_seconds": 5.2232951782643795,
+      "instrumented_seconds": 6.017705671489239,
+      "added_seconds": 0.7944104932248592,
+      "relative_overhead": 0.15208990993475302
+    }
+  ],
+  "baseline_total_seconds": 30.860922157764435,
+  "instrumented_total_seconds": 37.08034124970436,
+  "added_total_seconds": 6.219419091939926,
+  "relative_overhead": 0.20153056542333925,
+  "scope": "per-request generate wall time with CUDA synchronization; baseline has no route or logits hook"
+}

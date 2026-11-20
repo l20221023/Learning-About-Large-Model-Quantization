@@ -47,3 +47,8 @@
 - 用户重新提供 SSH 登录方式并确认现有 3090 时长足够。连接复用已保存 host key 的严格校验和交互式密码认证；未配置公钥，未将凭据写入项目文件。实际主机与之前相同，GPU 空闲，磁盘满足安全保留线；执行结束 GPU 已释放。
 - 首轮 OpenAI-compatible server Phase1 请求在 AWQ MLA prefill 报 `ColumnParallelLinear` 缺 `.weight` 并退出 1，失败包保留，不计入有效基线。in-process 2-token 与 64-token decode 探针通过后，为 server 配置固定 `max_model_len=256`、`max_num_batched_tokens=256`、`max_num_seqs=1`、512 MiB KV cache、关闭 prefix caching 并启用 eager mode；参数已用本机安装版 `vllm serve --help=all` 核实。新 run `Phase1-AWQ-20261118T083931-3090` 退出 0，15/15 成功，日志确认 AWQ Marlin 路径。
 - 这组证据仅支持社区 AWQ 单卡 batch=1 短请求功能和性能先导，不支持 BF16 加速比或正式质量结论。按 `P2_MASTER_RUNBOOK.md` 的 PARTIAL 门禁，未完成 held-out 质量/GPTQ/扩展性能条件前不启动依赖 Phase1 的 Phase2 GPU 工作。
+## 2026-11-20 Offloading Feasibility Gate 补充决策
+
+- 对单卡 BF16 offloading 的可行性，采用固定官方 revision + vLLM 0.26.0 V1 + TP=1 + UVA 20 GiB 的真实 3090 路径核验；该配置已成功完成固定输入前向并生成连续 decode trace。历史 V2 OOM 不外推为所有卸载后端失败，也不以 V1 成功宣称 V2 修复。
+- Decode trace 必须来自实际 BF16 连续生成，并要求固定 workload 的插桩/未插桩生成 token 与结束原因一致；缓存结果单独标记为离线模拟，不报告为传输或延迟实测。
+- Gate 的 Task B/C 已通过各自限定范围自查；Task A 的功能路径通过，但 CPU eager/UVA 数值差尚无预先批准容差，故 Gate 整体保持 PARTIAL。动态 Expert Cache/控制器实现属于后续研究投入，当前证据只用于评估，不据此自行改变研究方案。

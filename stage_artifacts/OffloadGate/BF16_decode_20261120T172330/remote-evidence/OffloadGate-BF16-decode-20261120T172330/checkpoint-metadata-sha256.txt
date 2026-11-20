@@ -1,0 +1,4 @@
+f346286b0f1c8b044252fd54cb4fa78b9fab6472a6e8bebb9edfe03d414ea03d  /root/autodl-tmp/p2-deepseek-moe/models/DeepSeek-V2-Lite-Chat-BF16-85864749/config.json
+d2cdb2f325f6682cf3ad1ad2526a9f979d857390b579380c0331d975136e0acf  /root/autodl-tmp/p2-deepseek-moe/models/DeepSeek-V2-Lite-Chat-BF16-85864749/model.safetensors.index.json
+31181eaf79394ea26728d95ecb54fe7c8413e6f56085dbabc8b0818134380ec8  /root/autodl-tmp/p2-deepseek-moe/models/DeepSeek-V2-Lite-Chat-BF16-85864749/tokenizer_config.json
+567edeeedda5a45b65278f1d065e5a605867b8aff922581b22128742dc404dc0  /root/autodl-tmp/p2-deepseek-moe/models/DeepSeek-V2-Lite-Chat-BF16-85864749/metadata-sha256.txt
