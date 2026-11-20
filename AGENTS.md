@@ -1,6 +1,36 @@
-# P2 项目执行规范
+# Codex Repository Instructions — LLM Quantization & MoE Optimization
 
-- 项目独立于 Stage D。长期执行规范见 `docs/P2_MASTER_RUNBOOK.md`。
-- M0-1 已验收。技术依据及证据等级见 `docs/inputs/` 和 `docs/EVIDENCE_LEDGER.md`。
-- 以 `docs/PLAN.md` 确认当前阶段。每阶段提交实测与复现证据，等待用户明确验收后再推进。
-- 大权重下载、额外 GPU 及核心方案变更须先说明原因并获用户授权。
+## Persistent context
+- 每次开始任务先读 `project_status.md`，再读适用任务计划、`task_status/<task_id>.md` 和原始证据；以 `docs/PLAN.md` 核对 P2 阶段和依赖。
+- 主模型是 `deepseek-ai/DeepSeek-V2-Lite-Chat`，官方 BF16 revision 固定为 `85864749cd611b4353ce1decdb286193298f64c7`。历史聊天标题“32B”不改变实验对象；社区 AWQ/GPTQ 必须单独记录身份。
+- 冻结 B0_TP2：2×RTX 3090、BF16、TP=2、vLLM 0.26.0、max_model_len=2304、max_num_seqs=8。已有 2400 条正式请求及独立审计；不默认重跑，不覆盖其数据、结果、审计或日志。
+- 工作流：O1 单卡 BF16 V1+UVA Offloading；Q1 正式 BF16 质量参照；O2 Router Trace 与缓存模拟；U1 United Expert 替换评估；J1 联合优化。工作流编号不等于 P2 Phase 验收通过。
+
+## Operating rules
+1. 只执行当前聊天明确获派的任务。仅负责 Q1 时，不启动 INT4、UE 训练、Offloading 改造或 Router 插桩。
+2. 实验前核对 GPU、输出盘余量、运行任务、服务健康和资源锁。未经授权，不停止其他任务服务、不修改模型权重、不再启动一个大显存模型。同一物理 GPU 不并发运行相互干扰的实验；TP=2 须取得两卡窗口，不能把 GPU1 空闲当成可启动 TP=2。
+3. 在授权范围内修复可安全解决的问题；完整任务仍可执行时，不只停在 smoke。`BLOCKED` 必须有具体依赖、失败命令、退出码和日志；缺证据或等待调度不能直接当成已证实的硬阻塞。
+4. 每个实验声明保存模型/源码精确 revision、环境、输入、seed、命令/脚本、逐样本记录、统计方法和核验结果。保留失败、重试和负结果；协议、模板或输出上限变化须另存版本，重新冻结并审计，不能混入旧结果。
+5. HTTP 文本块是传输块，不是单 token ITL。显存采样最大值不是保证的瞬时峰值；披露 prefix cache、硬件、TP 与后端差异，禁止跨不同比较条件归因加速。
+6. 24 题启发式检查不是正式能力评测。固定评测子集与评分协议，保留截断、解析失败、缺失输出及有效样本数。
+7. **O1 主线是总状态整合者**，负责审查和维护 `project_status.md`；Q1 只读总状态，只更新 `task_status/Q1.md` 及获派质量产物。其他任务写自己的 `task_status/<task_id>.md`。本轮管理初始化可创建引导状态；此后按上述所有权更新。不能仅凭任务自报升级为完成。
+8. 不修改无关 worktree，不丢弃他人改动，不覆盖冻结数据；不提交权重、凭据、缓存或巨大原始输出。只按路径暂存本任务文件，禁止在共享脏工作区直接 `git add .`、reset/clean 或强推。
+9. 状态更新附证据路径、检查范围、来源代码 commit、产物 commit/是否未提交、未达门槛及下一步。包含当前状态文件的提交用 `git log -1 --format=%H -- <path>` 查询，不能预填尚不存在的 SHA。同目录共享分支、索引和文件，不能并发 checkout、提交、rebase 或 pull；独立 clone/worktree 经 Git 审查同步。
+
+## P2 既有规范与文档分工
+- 项目独立于 Stage D；长期规范见 `docs/P2_MASTER_RUNBOOK.md`。M0-1 已由用户验收；技术依据与证据等级见 `docs/inputs/` 和 `docs/EVIDENCE_LEDGER.md`。
+- `project_status.md` 是经审查的统一状态入口；`docs/PLAN.md` 保留阶段 DAG、派发及历史；`docs/DECISIONS.md` 与 `docs/EVIDENCE_LEDGER.md` 保留决策和证据台账。总状态不替代原始证据，不静默重写旧计划。
+- 原总调度继续维护共享 PLAN/DECISIONS/EVIDENCE_LEDGER；普通阶段任务不得写这些文件。若 O1 整合者与原总调度不是同一聊天，各自职责保留，不自动转移计划所有权。
+- 每阶段提交实测与复现证据，默认等待用户明确验收后再推进。`docs/PLAN.md` 已记录此前“逐阶段调度复核、最后统一人工验收”的特定授权；仅在该授权仍适用的已派发任务内采用，不扩展到新工作流。自查 PASS 不等于用户验收，PARTIAL 不满足依赖门槛。
+- 大权重下载、额外 GPU 和核心方案变更先说明原因并取得用户授权；已有明确授权及预算按原边界执行。**2026-11-20 本次管理初始化仅建立机制，不重跑 B0、不启动 GPU 实验、不修改权重、不操作模型服务。** 该任务边界不撤销其他任务的既有授权。
+- 文档冲突以当前用户明确指令和实际任务授权为准，原始证据决定事实状态。保留历史差异并提交整合者复核，不用旧模板启动命令自动重启已完成阶段。
+- 本文件以经审查的 AGENTS-1 为主要框架，整合原 AGENTS；输入原文与合并说明见 `docs/project_management/`。归档输入用于追溯，不构成额外实验派发。
+
+## Completion rules
+- `COMPLETED`：交付齐备且独立检查成功；工程完成与用户验收分别标记。
+- `PARTIAL`：已有经验证的可复用工作，但仍缺验收条件。
+- `WAITING`：尚未开始或有意等待调度/资源窗口。
+- `BLOCKED`：已证明的硬阻塞，附完整诊断。
+- `NEEDS_REVIEW`：证据不足或记录冲突的审查标记，不是通过状态；已知未修复的核心失败可标 `FAIL`。
+- P2 报告的 `PASS` 沿用 runbook 的限定范围定义，不直接等于整个工作流 `COMPLETED`。
+- 完成报告写明实际路径、检查、Git SHA、同步状态、冲突、未验证限制和下一道门槛。
