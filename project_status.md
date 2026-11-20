@@ -3,6 +3,7 @@
 > 统一状态入口：已作仓库文件与证据索引审查，不代替原始证据。
 > 总状态整合者：**O1 主线任务**；Q1 只读本文件，更新 `task_status/Q1.md`。
 > 审查快照：2026-11-20 17:01 起（Asia/Shanghai）；其他任务仍在执行，以下不是实时 GPU/服务状态。
+> 最近同步尝试：2026-11-20（Asia/Shanghai）；本地 `main` 为 `547505222e41f5aca2b199340558d89f98a3f8b8`，远端仍为父提交 `f492352f098197d4a5ecebb92fa18ee8339a45f8`。远端网页匿名 HTTP 200 可访问；因目标要求 GitHub 私有仓库，未推送。
 > 本轮范围：管理文件合并、Git/聊天路径核验、既有证据阅读；未重跑基准或实验审计器。
 > Reviewed by：管理初始化聊天 `01a1f82e-346b-7d82-9166-1851f5aa272e`（文件审查）；后续由 O1 继续复核维护。
 
@@ -69,6 +70,7 @@
 - worktree list 仅登记上述一个 worktree，没有已登记的另一分支工作树。
 - 本机 O1 总调度聊天 `01a1ea71-2fbc-7a72-909f-2aa6e15a13db` 与 Q1 聊天 `01a1f7f6-6c92-7c43-98e7-f092894f3291` 的应用 cwd 和最近命令 cwd 均为此目录。已观察的本机 checkout 共享 main；未检查 AutoDL 其他 clone/分支，不声称云端已同步。
 - 初始化提交用 `git log -1 --format=%H -- docs/project_management/INITIALIZATION.md` 查询，不预填自身 SHA。提交后的远端同步情况以交付时 HEAD 与 ls-remote 核对为准。
+- 当前远端可通过 `origin` 查询，但 GitHub 网页匿名访问返回 HTTP 200；私有性与用户目标冲突。状态提交 `5475052` 尚未推送。在确认仓库可见性为私有或改用获授权的私有 remote 前，不发布任务/证据状态。
 - 初查索引为空，无 unmerged paths；大量他人实验改动/未跟踪产物保留。文本证据差异不能通过覆盖消除。
 
 ## Open decisions / evidence discrepancies
