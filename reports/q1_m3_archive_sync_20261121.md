@@ -8,7 +8,7 @@
 - Q1：固定子集工程评测完成，人工验收待办。`task_status/Q1.md` 已更新；原 Q1 人工验收状态仍需 O1 审查。GSM8K 31/256、C-Eval 135/256（5 个解析失败按总数计）、MMLU 131/256；API 失败、输出截断、上下文溢出均为 0。
 - M3 固定工作集 TP=2 Trace、ON/OFF parity、开销对照和独立审计：COMPLETED。TP 路由差异分析的因果归因：PARTIAL。独立归档审计 `stage_artifacts/P2-M3/archive_audit_run.log` 为 PASS；历史 125 项原 manifest 与 9 个源码快照哈希验证通过。
 - O1：PARTIAL，既有独立审计通过但预设数值门槛为 `NUMERIC_FAIL`。本任务不改 `project_status.md`，由 O1 整合。
-- O2：当前状态仍 PARTIAL；动态 hidden replay 数值 gate 未通过。Codex 线程列表显示 O2 根因分析线程仍为 active，禁止与该线程并发提交共享分支/索引。
+- O2：按最新 `task_status/O2.md`，工作流 PARTIAL、Task B FAIL、Task C WAITING；顺序相关的前一行输出错配尚未定位到内部算子/生命周期根因。最新 GPU 因果验证因跳板 SSH 严格主机密钥后认证失败而未获准入；未建立目标会话、未启动新 GPU 作业，当前资源状态未知。O2 线程仍 active；本任务使用隔离 worktree/分支，不与其并发写共享索引。
 
 ## 哈希与文件核对
 
