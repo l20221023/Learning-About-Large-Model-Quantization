@@ -39,3 +39,13 @@
 - Main push：git push origin HEAD:refs/heads/main 退出 0，Git 输出 c21d649..93680f6 HEAD -> main。push 后 git ls-remote origin refs/heads/main 返回 93680f6ec651a68e9011cef3ecfa11ec3cb4629d；GitHub API branch readback 返回相同 SHA。该 SHA 是本轮第一次完整主线状态/报告同步提交。
 
 - 本次同步报告和状态页再补入上述验证记录；该轻量审计更新在下一个提交后同样推送并单独回读。
+
+## 最终独立回读（2026-11-21）
+
+- 在干净 worktree `E:/01-Projects/llm_quantization-q1-m3-finalize` 读取 `origin/main` 与目标归档分支。`git fetch origin main codex/q1-m3-archive-sync-20261121` 本次退出 0；`origin/main=4d0d6ebca0b34e9b0cf11de53b316a75d7d1ff48`，归档分支仍为 `abed4b01953c941efd82b750906c1e0137124912`。`git merge-base --is-ancestor origin/codex/q1-m3-archive-sync-20261121 origin/main` 退出 0；目标提交已完整包含在 main，无需再次合并。
+- `git ls-remote origin refs/heads/main refs/heads/codex/q1-m3-archive-sync-20261121` 回读与 fetch 后 refs 一致。集成采用 fast-forward，没有双亲 merge commit；归档提交 `abed4b01953c941efd82b750906c1e0137124912` 是已并入的分支头，随后状态整合提交 `f5c07a58a5283aff1524425797a7baff94f4d00d`，首次同步提交 `93680f6ec651a68e9011cef3ecfa11ec3cb4629d`，后续验证提交为当前 `4d0d6ebca0b34e9b0cf11de53b316a75d7d1ff48`。
+- 相对并入前 `c21d649e659c080aae3b2daefbab8e673e55825c`，当前 main 有 41 个变更路径；归档分支自身含 39 个 Q1/M3 归档路径。`git diff --check c21d649..origin/main` 退出 0；归档路径未包含模型权重、Parquet/NPY/NPZ、PT/PTH 或其他大型原始结果。B0/Q1/M3 冻结输出没有重跑或修改。
+- 当前共享 checkout 有并行的未提交改动。只读 SHA 比对发现已并入路径中，`project_status.md`、`task_status/Q1.md`、`reports/q1_m3_archive_sync_20261121.md`、`stage_artifacts/P2-M1/quality_report.md` 与 main 版本不同；`reports/q1_m3_mainline_merge_20261121.md` 在该 checkout 不存在。独立 worktree 的本次修改不触及这些工作副本，原 checkout 保持未改。
+- 并入状态保持边界：Q1 固定子集工程基线完成、人工验收 WAITING；M3 核心 Trace/Parity/开销工作集完成、TP 路由根因 PARTIAL；O1 仍 PARTIAL / NUMERIC_FAIL；O2 的 main 状态快照仍是 PARTIAL、Task B FAIL、Task C WAITING。`task_status/O2.md` 不在该归档提交中；本机后续未提交 O2 记录仍为整体 PARTIAL、等待人工验收，本次没有把它并入或改变 O1/O2 状态。
+- 原始数据备份补充核查：另一个本地审计分支 `codex/q1-acceptance-backup-20261121` 的报告 `reports/data_backup_audit_20261121/backup_verification_report.md` 记录当次从 AutoDL 工作区恢复 8 个关键对象、共 18,903,791 bytes，8/8 SHA 匹配；目录清单仍有本地/远端路径差异。`/root/autodl-tmp` 是计算实例工作区，未证明独立持久保留，因此长期备份状态仍为 `BACKUP_PENDING`。SHA 清单和这 8 个恢复样本均不等于完整灾备。
+- 本次复核命令：`git fetch origin main codex/q1-m3-archive-sync-20261121`；`git merge-base --is-ancestor origin/codex/q1-m3-archive-sync-20261121 origin/main`；`git diff --name-status c21d649..origin/main`；`git diff --check c21d649..origin/main`；`git ls-remote origin refs/heads/main refs/heads/codex/q1-m3-archive-sync-20261121`。远端 main 已在本轮复核前完成推送；复核没有重跑实验或 GPU 操作。
