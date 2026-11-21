@@ -3,7 +3,7 @@
 > 统一状态入口：已作仓库文件与证据索引审查，不代替原始证据。
 > 总状态整合者：**O1 主线任务**；Q1 只读本文件，更新 `task_status/Q1.md`。
 > 审查快照：2026-11-21（Asia/Shanghai）；其他任务仍在执行，以下不是实时 GPU/服务状态。
-> 最近核验：2026-11-21。GitHub API 显示远端 `main=c21d649e659c080aae3b2daefbab8e673e55825c`，归档分支 `codex/q1-m3-archive-sync-20261121=abed4b01953c941efd82b750906c1e0137124912`；API 核验成功，Git HTTPS fetch 曾失败。
+> 并入前 ref 快照：2026-11-21。远端 `main=c21d649e659c080aae3b2daefbab8e673e55825c`，归档分支 `codex/q1-m3-archive-sync-20261121=abed4b01953c941efd82b750906c1e0137124912`；当前 main 同步结果与回读证据见 `reports/q1_m3_mainline_merge_20261121.md`。
 > 本轮范围：管理文件合并、Git/聊天路径核验、既有证据阅读；未重跑基准或实验审计器。
 > Reviewed by：项目主线整合任务（2026-11-21）；Q1 人工验收与 M3 根因归因边界保留为独立门槛。
 

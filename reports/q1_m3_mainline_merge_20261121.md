@@ -35,3 +35,7 @@
 - 待本次状态与报告提交及 main push 后补入：状态提交 SHA、最终 main SHA、远端验证命令/结果、精确状态和待处理数据备份事项。
 
 - Push 前校验：待执行本地 Git push；若网络继续失败，将保留失败命令/退出码，不声称已同步。最终 main SHA 与远端 readback 结果在完成后另记。
+
+- Main push：git push origin HEAD:refs/heads/main 退出 0，Git 输出 c21d649..93680f6 HEAD -> main。push 后 git ls-remote origin refs/heads/main 返回 93680f6ec651a68e9011cef3ecfa11ec3cb4629d；GitHub API branch readback 返回相同 SHA。该 SHA 是本轮第一次完整主线状态/报告同步提交。
+
+- 本次同步报告和状态页再补入上述验证记录；该轻量审计更新在下一个提交后同样推送并单独回读。
