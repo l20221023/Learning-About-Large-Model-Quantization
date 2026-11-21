@@ -2,10 +2,10 @@
 
 > 统一状态入口：已作仓库文件与证据索引审查，不代替原始证据。
 > 总状态整合者：**O1 主线任务**；Q1 只读本文件，更新 `task_status/Q1.md`。
-> 审查快照：2026-11-20 17:01 起（Asia/Shanghai）；其他任务仍在执行，以下不是实时 GPU/服务状态。
-> 最近同步尝试：2026-11-20（Asia/Shanghai）；本地 `main` 为 `547505222e41f5aca2b199340558d89f98a3f8b8`，远端仍为父提交 `f492352f098197d4a5ecebb92fa18ee8339a45f8`。远端网页匿名 HTTP 200 可访问；因目标要求 GitHub 私有仓库，未推送。
+> 审查快照：2026-11-21（Asia/Shanghai）；其他任务仍在执行，以下不是实时 GPU/服务状态。
+> 最近核验：2026-11-21。GitHub API 显示远端 `main=c21d649e659c080aae3b2daefbab8e673e55825c`，归档分支 `codex/q1-m3-archive-sync-20261121=abed4b01953c941efd82b750906c1e0137124912`；API 核验成功，Git HTTPS fetch 曾失败。
 > 本轮范围：管理文件合并、Git/聊天路径核验、既有证据阅读；未重跑基准或实验审计器。
-> Reviewed by：管理初始化聊天 `01a1f82e-346b-7d82-9166-1851f5aa272e`（文件审查）；后续由 O1 继续复核维护。
+> Reviewed by：项目主线整合任务（2026-11-21）；Q1 人工验收与 M3 根因归因边界保留为独立门槛。
 
 ## Objective
 
@@ -16,13 +16,14 @@
 | ID | Owner / status writer | Status | 已核对证据与边界 | 下一门槛 |
 | --- | --- | --- | --- | --- |
 | B0_TP2 | 已冻结基线；O1 维护索引 | COMPLETED（已有独立审计记录） | `benchmarks/deepseek_v2_lite/reports/baseline_report.md`；`benchmarks/deepseek_v2_lite/results/B0_TP2/audit.json` 的 passed=true、errors=[]。本轮只读现有审计，未独立重跑 | 保留原始数据；不默认重跑 |
-| O1 | O1 主线；`task_status/O1.md` | PARTIAL | `reports/offloading_gpu_causal_validation.md`：V1/UVA20 单卡固定短窗退出 0，有限功能与因果验证；未冻结逐 token 数值容差，完整质量/长期稳定性未验收 | 明确数值容差及连续 decode、性能/稳定性验证；协调 O2/Q1 资源 |
-| Q1 | Q1 质量任务；`task_status/Q1.md` | PARTIAL / NEEDS_REVIEW（记录滞后） | 本地已有 `stage_artifacts/P2-M1/dataset_manifest.json`、`quality_samples.jsonl` 768 行；manifest 列 GSM8K 1、MMLU 1、C-Eval 52 个文件。旧 STATUS 仍称缺数据；当前聊天报告已到 smoke/格式修正，正式结果未在本轮独立核验 | 对齐样本/配置/评分版本，交付 raw、结果审计和最新任务状态；不得沿用旧阻塞结论或声称正式完成 |
-| O2 | 现有 OffloadGate 执行任务；结果交 O1 | PARTIAL | `reports/bf16_uva_decode_and_cache_analysis.md`：未插桩 9 请求先导；BF16 trace 有失败/重试，正式覆盖、parity 与缓存结论待核验。已有 AWQ decode trace 只证明 AWQ 路径 | 核查真实 BF16 trace 的一致性、覆盖与开销，再审查离线模拟；理论传输量不等于实测 |
+| O1 | O1 主线；`task_status/O1.md` | PARTIAL；预设数值门槛 NUMERIC_FAIL | `stage_artifacts/OffloadGate/O1_acceptance_20261120/independent_audit.json` 审计通过且 9/9 请求成功，但数值门槛未通过；长时稳定性及可归因 UVA PCIe 成本未闭合，详见 `stage_artifacts/OffloadGate/O1_acceptance_20261120/O1_GATE_STATUS.md` | 保持失败与未验收状态；补齐逐 token 数值、长时稳定性及可归因传输成本证据 |
+| Q1 | Q1 质量任务；`task_status/Q1.md` | COMPLETED（固定子集工程基线）；人工验收 WAITING | GSM8K 31/256、C-Eval 135/256（含 5 个解析失败）、MMLU 131/256；固定 256 题子集，不是完整官方成绩。逐样本、raw、manifest 与独立 CPU 审计见 `stage_artifacts/P2-M1/` | 保留人工验收待办；后续质量比较须复用冻结样本/协议 |
+| M3 | M3 Router Trace；`task_status/M3.md` | COMPLETED（核心固定集实测）；PARTIAL（TP 路由差异根因） | 6 个固定请求 Trace、ON/OFF parity、开销对照和独立审计通过；8,138 layer-token Trace 行、48,828 expert selections。TP 差异的因果归因未证明，详见 `stage_artifacts/P2-M3/` | 保持根因 PARTIAL；不把跨 TP 路由差异解读为实现错误 |
+| O2 | OffloadGate；`task_status/O2.md`（当前执行端记录未进入 main） | PARTIAL；Task B FAIL，Task C WAITING | 最新本地 O2 状态记录动态 hidden replay 63 行仅 1 行 bitwise exact、62 行错位/不匹配；GPU 因果验证因 SSH 认证失败未建立目标会话。细节以 O2 原始报告与任务状态为准 | 定位 replay 顺序相关错位；恢复授权连接后先重新做资源门禁，不启动缓存实验 |
 | U1 | 待派发；未来 `task_status/U1.md` | NEEDS_REVIEW | M0-5 局部 expert shadow 和 Phase3 计划不等于 UE 训练/整模型替换完成；本轮未做实现盘点 | 先审查实现、教师/学生身份、替换成本与质量损失，获派后执行 |
 | J1 | 待派发；未来 `task_status/J1.md` | WAITING | 本轮未确认联合策略实测，不从局部先导推断完成 | 依赖单项通过及可比对照后，由用户/总调度明确派发 |
 
-表内实验产物在初始化时尚未纳入当前 HEAD；本管理提交只保存入口与证据路径，不声称远端已包含实验文件。路径存在不等于证据已完成独立复核。
+Q1/M3 轻量产物及任务状态已纳入本次主线候选提交；逐样本 raw、Parquet、M3 原始 Trace/运行数据仍不纳入 Git。当前本机共享 checkout 可见 Q1 data 204 文件约 5.04 MB、正式 quality_raw 9 文件约 6.44 MB、M3 remote-runs 20 文件约 4.51 MB。独立第二份备份和经验证的恢复路径尚未核实；SHA 清单只能验证完整性，不能证明备份存在。历史 AutoDL 磁盘快照不是当前可恢复性证明。
 
 ## Immutable Baseline Contract
 
@@ -75,8 +76,8 @@
 
 ## Open decisions / evidence discrepancies
 
-- Q1 旧 STATUS/runtime 滞后于 manifest、样本和聊天进展；由 Q1 提交一致版本和审计，O1 整合。当前不指定正式准确率。
-- O2 已有基线和 trace 尝试，不沿用原模板 WAITING；正式 BF16 trace/缓存完成状态仍待复核。
+- Q1 固定子集工程基线已完成并记录于 `task_status/Q1.md`；人工验收仍待办。准确率仅代表冻结的各 256 条样本。
+- O2 保持 PARTIAL：动态 replay 数值门槛 FAIL，Task C WAITING。当前 main 未包含执行端 O2 任务状态文件；不覆盖或代替 O2 所有者的后续更新。
 - 物理 GPU/服务窗口以锁和实时检查为准；本轮不宣称当前 GPU 空闲。
 - UE 实作、J1 对照、远端实验提交保持待审查/等待，不借初始化升级成果。
 - 三份原输入完整保存在 `docs/project_management/`；旧模板的负责人/路径占位信息已用本轮核验替换，原文仍可追溯。
