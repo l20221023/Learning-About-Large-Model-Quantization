@@ -1,0 +1,4 @@
+dataset,sample_count,correct,model_answer_wrong,failure_count,api_failures,parse_failures,output_truncated,context_overflow,accuracy_over_256,accuracy_on_scorable
+gsm8k,256,31,225,0,0,0,0,0,0.12109375,0.12109375
+ceval,256,135,116,5,0,5,0,0,0.52734375,0.5378486055776892
+mmlu,256,131,125,0,0,0,0,0,0.51171875,0.51171875

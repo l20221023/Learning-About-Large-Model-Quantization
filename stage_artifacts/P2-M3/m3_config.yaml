@@ -1,0 +1,53 @@
+task: P2-M3 Router Trace capture and overhead comparison
+status: COMPLETED
+model:
+  repo: deepseek-ai/DeepSeek-V2-Lite-Chat
+  revision: 85864749cd611b4353ce1decdb286193298f64c7
+  local_snapshot: /root/autodl-tmp/p2-deepseek-moe/models/DeepSeek-V2-Lite-Chat-BF16-85864749
+  dtype: bfloat16
+  vllm_version: 0.26.0
+  tensor_parallel_size: 2
+  max_model_len: 2304
+  max_num_seqs: 8
+  gpu_memory_utilization: 0.85
+  enforce_eager: true
+  model_runner: V1
+  prefix_caching: enabled_by_vllm_default
+trace:
+  implementation: built_in_vllm_routed_experts_capture
+  on_flag: --enable-return-routed-experts
+  off_flag: null
+  source_overlay: false
+  returned_fields: topk_expert_ids
+  expected_hidden_layer_slots: 27
+  expected_moe_layer_id_range_inclusive: [1, 26]
+  expected_routed_experts: 64
+  expected_top_k: 6
+  output_mapping: prompt_rows_then_processed_generated_input_rows; final unconsumed generated token has no route row
+  api_request_to_trace_mapping: one synchronous HTTP request per completion; response id retained
+  internal_scheduler_request_id: unknown_not_exposed_by_response
+  tp_handling: one logical route array per API response; TP1 identity is diagnostic only because TP-size-specific differences were observed
+workload:
+  source: workload_source.json
+  workload_id: m0-4-curated-seed-v1
+  sample_count: 6
+  rendering: cached tokenizer chat template; submit frozen prompt_token_ids to completions API
+  seed: 42
+  temperature: 0.0
+  top_p: 1.0
+  max_tokens: 24
+  logprobs: 5
+  return_token_ids: true
+parity:
+  output_token_ids: exact_match_required
+  top5_logprob_token_strings: exact_set_match_required
+  top5_logprob_abs_tolerance: 1.0e-5
+  text_only_parity_is_insufficient: true
+performance:
+  paired_service_configuration: identical_except_route_capture_flag
+  request_order: frozen_workload_order_then_two_identical_prefix_cache_probes
+  capture_overhead: report_trace_on_minus_off_metrics_separately_from_output_parity
+  gpu_memory_sample_interval_ms: 250
+  cpu_rss_scope: vllm_server_process_group
+  tpot_source: vllm_request_time_per_output_token_histogram_when_present
+  client_latency: wall_clock_request_elapsed

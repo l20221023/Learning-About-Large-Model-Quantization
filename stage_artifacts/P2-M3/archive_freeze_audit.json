@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "errors": [],
+  "original_m3_manifest": {
+    "entries": 125,
+    "verified_entries": 125,
+    "manifest_sha256": "6e96b63385f33d726852540fc4500bc478b027af1f4522929b1da42f9e932f5c"
+  },
+  "vllm_source_snapshot": {
+    "expected_records": 9,
+    "verified_files": 9,
+    "paths": [
+      "model_executor/layers/fused_moe/router/base_router.py",
+      "model_executor/layers/fused_moe/routed_experts_capturer.py",
+      "model_executor/layers/fused_moe/runner/moe_runner.py",
+      "v1/worker/gpu_model_runner.py",
+      "v1/worker/gpu_worker.py",
+      "v1/core/sched/scheduler.py",
+      "config/vllm.py",
+      "entrypoints/openai/completion/protocol.py",
+      "entrypoints/openai/completion/serving.py"
+    ]
+  },
+  "original_m3_audit_status": "PASS",
+  "tp_control_audit_status": "PASS",
+  "tp_routing_causal_status": "PARTIAL",
+  "o2_trace_sha256": "dbe9920be8ecbfa8b6828e12d8c8921a53933c001b5ae02b001693b6f7a66993",
+  "o2_trace_audit_status": "PASS",
+  "o2_cache_replay_cells": 18,
+  "control_run_files_remote_local_hash_verified": {
+    "1": 20,
+    "2": 20
+  }
+}

@@ -1,0 +1,81 @@
+task: P2-M1 BF16 quality reference
+status: PREPARATION_ONLY_DATA_AND_SERVICE_REQUIRED
+model:
+  served_name: /root/autodl-tmp/p2-deepseek-moe/models/DeepSeek-V2-Lite-Chat-BF16-85864749
+  dtype: bfloat16
+  tensor_parallel_size: 2
+  max_model_len: 2304
+  model_config_sha256: f346286b0f1c8b044252fd54cb4fa78b9fab6472a6e8bebb9edfe03d414ea03d
+  api_base: http://127.0.0.1:8000/v1
+  tokenizer_path: /root/autodl-tmp/p2-deepseek-moe/models/DeepSeek-V2-Lite-Chat-BF16-85864749
+  tokenizer_class: LlamaTokenizerFast
+  tokenizer_json_sha256: 41f3bf64213da8c012d8bd0871a58a1fdf70463e8f08f110ddbb1082f529f669
+  tokenizer_config_sha256: 31181eaf79394ea26728d95ecb54fe7c8413e6f56085dbabc8b0818134380ec8
+  chat_template_sha256: 8aeba567270fa9a8d5372caf4b04affea947c4421d96adc01e3ff94021b0ae8e
+  chat_template: "{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{{ bos_token }}{% for message in messages %}{% if message['role'] == 'user' %}{{ 'User: ' + message['content'] + '\n\n' }}{% elif message['role'] == 'assistant' %}{{ 'Assistant: ' + message['content'] + eos_token }}{% elif message['role'] == 'system' %}{{ message['content'] + '\n\n' }}{% endif %}{% endfor %}{% if add_generation_prompt %}{{ 'Assistant:' }}{% endif %}"
+inference:
+  temperature: 0.0
+  top_p: 1.0
+  seed: 42
+  few_shot_count: 0
+  generation_options:
+    gsm8k:
+      max_tokens: 1024
+      stop: []
+    ceval:
+      max_tokens: 128
+      stop: ["\n"]
+    mmlu:
+      max_tokens: 128
+      stop: ["\n"]
+  context_policy: tokenize_full_chat_template_input; reject_and_record_if_over_2304; never_silently_truncate
+  record_usage: true
+  preserve_messages_and_response: true
+  multiple_choice_scoring: generation_based_option_letter_parse; do_not_mix_with_loglikelihood
+sampling:
+  seed: 42
+  sample_count_each: 256
+  stratified_by_subject: true
+  stable_row_id: "<dataset-subject>:<source-split-row-index>"
+  shuffle_algorithm: Python random.Random(seed), seeded independently per task and subject
+datasets:
+  gsm8k:
+    repo: openai/gsm8k
+    revision: cc7b047b6e5bb11b4f1af84efc572db110a51b3c
+    split: test
+    file: main/test-00000-of-00001.parquet
+    file_sha256: ee7b8da9e381df27b9e3f7758a159ab2bdaa4dbaa910546cbbc47e0cb44e4f59
+    source_url: https://huggingface.co/datasets/openai/gsm8k/resolve/cc7b047b6e5bb11b4f1af84efc572db110a51b3c/main/test-00000-of-00001.parquet
+    prompt_template: "Solve the following math problem. Return only the final numeric answer using exactly this format: #### <number>. Do not include reasoning or any other text.\n\nQuestion: {question}\nAnswer:"
+    prompt_template_sha256: 6a0defd1862ebf27e1749f6568344e0ae07bf3a2cc40fd8a226cdc9cd5c60c33
+    score: final numeric answer exact match
+  ceval:
+    repo: ceval/ceval-exam
+    revision: 85ae5586dbc20cac29d0bef4df66c6569b04c1a0
+    split: val
+    files: "<each subject>/val-00000-of-00001.parquet"
+    file_hashes: dataset_manifest.json
+    source_file_count: 52
+    license: CC-BY-NC-SA-4.0
+    prompt_template: "请根据题意选择最合适的答案。只输出一个选项字母（A、B、C 或 D），不要解释。\n\n{question}\nA. {A}\nB. {B}\nC. {C}\nD. {D}\n答案："
+    prompt_template_sha256: 8684880863ea64844801a0a5cae0699aa40e1bc58e9f8dbcd9c5021ed7ecb186
+    score: parsed option letter accuracy
+  mmlu:
+    repo: cais/mmlu
+    revision: c30699e8356da336a370243923dbaf21066bb9fe
+    config: all
+    split: test
+    file: all/test-00000-of-00001.parquet
+    file_sha256: 74a41822ce7d3def56e1682f958469c04642a5336a5ce912fa375fdb90fb25d7
+    license: MIT
+    prompt_template: "Answer the following multiple-choice question. Reply with only the option letter (A, B, C, or D), without explanation.\n\n{question}\nA. {A}\nB. {B}\nC. {C}\nD. {D}\nAnswer:"
+    prompt_template_sha256: 3bda61954d77c211177db997bf4301a1103548ee62841dd7eb8f675c07f69294
+    score: parsed option letter accuracy
+evaluation:
+  official_task_claim: false
+  subset_notice: "Each score is a fixed 256-sample project subset, not a complete official benchmark result."
+  sample_manifest: quality_samples.jsonl
+  raw_directory: quality_raw/
+  summary_csv: quality_summary.csv
+  report: quality_report.md
+  independent_auditor: audit_quality.py

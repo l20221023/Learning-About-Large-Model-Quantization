@@ -1,0 +1,192 @@
+{
+  "status": "PASS",
+  "errors": [],
+  "checks": {
+    "fixed_workload_count": 6,
+    "parity_cases": 9,
+    "on_trace_cases": 8,
+    "formal_trace_cases": 6,
+    "formal_processed_token_rows": 313,
+    "formal_layer_token_rows": 8138,
+    "formal_expert_selections": 48828,
+    "normalized_trace_jsonl_rows": 8138,
+    "prefix_cache_prompt_route_reuse_equal": true,
+    "prefix_cache_hit_tokens": {
+      "on_formal_and_cache_probe_window": 48,
+      "off_formal_and_cache_probe_window": 48
+    },
+    "tp1_reference_prompt_rows_compared": 4550,
+    "tp1_reference_prompt_route_mismatches": 688,
+    "tp1_reference_prompt_token_mismatches": 0,
+    "on_formal_success_rate": "6/6",
+    "off_formal_success_rate": "6/6"
+  },
+  "parity": {
+    "cache-probe-1": {
+      "output_tokens": 24,
+      "top5_logprob_max_abs_diff": 0.0,
+      "text_equal": true
+    },
+    "cache-probe-2": {
+      "output_tokens": 24,
+      "top5_logprob_max_abs_diff": 0.0,
+      "text_equal": true
+    },
+    "formal-chinese-01": {
+      "output_tokens": 24,
+      "top5_logprob_max_abs_diff": 0.0,
+      "text_equal": true
+    },
+    "formal-chinese-02": {
+      "output_tokens": 24,
+      "top5_logprob_max_abs_diff": 0.0,
+      "text_equal": true
+    },
+    "formal-code-01": {
+      "output_tokens": 24,
+      "top5_logprob_max_abs_diff": 0.0,
+      "text_equal": true
+    },
+    "formal-code-02": {
+      "output_tokens": 24,
+      "top5_logprob_max_abs_diff": 0.0,
+      "text_equal": true
+    },
+    "formal-general-01": {
+      "output_tokens": 24,
+      "top5_logprob_max_abs_diff": 0.0,
+      "text_equal": true
+    },
+    "formal-general-02": {
+      "output_tokens": 24,
+      "top5_logprob_max_abs_diff": 0.0,
+      "text_equal": true
+    },
+    "smoke-general-01": {
+      "output_tokens": 24,
+      "top5_logprob_max_abs_diff": 0.0,
+      "text_equal": true
+    }
+  },
+  "performance": {
+    "on": {
+      "formal_successes": 6,
+      "formal_requests": 6,
+      "output_tokens": 144,
+      "client_request_ms_mean": 1227.34541,
+      "client_request_ms_min": 1217.954789,
+      "client_request_ms_max": 1243.43581,
+      "aggregate_client_throughput_tokens_per_second": 19.157548848810077,
+      "vllm_ttft_histogram_delta": {
+        "sum_seconds": 0.3648838996887207,
+        "count": 6,
+        "metric_names": [
+          "vllm:time_to_first_token_seconds_count",
+          "vllm:time_to_first_token_seconds_sum"
+        ]
+      },
+      "vllm_request_tpot_histogram_delta": {
+        "sum_seconds": 0.3025896508732568,
+        "count": 6,
+        "metric_names": [
+          "vllm:request_time_per_output_token_seconds_count",
+          "vllm:request_time_per_output_token_seconds_sum"
+        ]
+      },
+      "vllm_ttft_mean_seconds": 0.06081398328145345,
+      "vllm_request_tpot_mean_seconds": 0.05043160847887613
+    },
+    "off": {
+      "formal_successes": 6,
+      "formal_requests": 6,
+      "output_tokens": 144,
+      "client_request_ms_mean": 1207.6846583333333,
+      "client_request_ms_min": 1191.684657,
+      "client_request_ms_max": 1224.420164,
+      "aggregate_client_throughput_tokens_per_second": 19.47184660887756,
+      "vllm_ttft_histogram_delta": {
+        "sum_seconds": 0.36124563217163086,
+        "count": 6,
+        "metric_names": [
+          "vllm:time_to_first_token_seconds_count",
+          "vllm:time_to_first_token_seconds_sum"
+        ]
+      },
+      "vllm_request_tpot_histogram_delta": {
+        "sum_seconds": 0.29773088155881217,
+        "count": 6,
+        "metric_names": [
+          "vllm:request_time_per_output_token_seconds_count",
+          "vllm:request_time_per_output_token_seconds_sum"
+        ]
+      },
+      "vllm_ttft_mean_seconds": 0.06020760536193848,
+      "vllm_request_tpot_mean_seconds": 0.04962181359313536
+    }
+  },
+  "capture_overhead_on_minus_off": {
+    "mean_client_request_ms": {
+      "absolute": 19.660751666666556,
+      "relative_percent": 1.627970640431875
+    },
+    "mean_vllm_ttft_seconds": {
+      "absolute": 0.0006063779195149763,
+      "relative_percent": 1.0071450539673954
+    },
+    "mean_vllm_tpot_seconds": {
+      "absolute": 0.000809794885740768,
+      "relative_percent": 1.6319332710821977
+    },
+    "aggregate_client_throughput_tokens_per_second": {
+      "absolute": -0.31429776006748256,
+      "relative_percent": -1.6141137837650588
+    },
+    "gpu_memory_peak_mib": {
+      "0": 0,
+      "1": 0
+    },
+    "aggregate_process_group_rss_peak_mib": {
+      "absolute": -12.83203125,
+      "relative_percent": -0.20289525663624852
+    }
+  },
+  "memory": {
+    "on": {
+      "gpu_memory_peak_mib_by_physical_gpu": {
+        "0": 21027,
+        "1": 21027
+      },
+      "gpu_utilization_peak_percent_by_physical_gpu": {
+        "0": 100,
+        "1": 100
+      },
+      "aggregate_process_group_rss_peak_mib": 6311.62890625,
+      "aggregate_process_group_rss_samples": 50
+    },
+    "off": {
+      "gpu_memory_peak_mib_by_physical_gpu": {
+        "0": 21027,
+        "1": 21027
+      },
+      "gpu_utilization_peak_percent_by_physical_gpu": {
+        "0": 100,
+        "1": 100
+      },
+      "aggregate_process_group_rss_peak_mib": 6324.4609375,
+      "aggregate_process_group_rss_samples": 49
+    }
+  },
+  "prefix_cache_hit_tokens": {
+    "on_formal_and_cache_probe_window": 48,
+    "off_formal_and_cache_probe_window": 48
+  },
+  "interpretation": {
+    "algorithm_configuration_changed": false,
+    "on_off_difference_is_capture_overhead": true,
+    "api_internal_scheduler_request_id": "UNKNOWN; public response id gives exact one-request association",
+    "cpu_memory_measurement": "sum of server-process-group RSS; shared pages may be counted more than once",
+    "prompt_decode_mapping": "prefill rows map frozen prompt IDs; decode rows map processed generated input IDs and predict the following output token",
+    "last_output_token_route": "absent if not processed by a subsequent model forward",
+    "tp1_route_comparison": "diagnostic only: 688 of 4550 prompt token/layer route rows differ between TP=1 and TP=2 despite exact token-ID alignment; this does not change the ON/OFF TP=2 parity or single-logical-array dedup checks"
+  }
+}
