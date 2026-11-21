@@ -22,7 +22,7 @@
 
 - 共享工作区 `main` HEAD `c21d649e659c080aae3b2daefbab8e673e55825c`；索引为空。仅本任务修改 `task_status/Q1.md` 并新增本报告；`task_status/M3.md` 及 M1/M3 实验目录当前为未跟踪文件。
 - 工作区同时有 Phase 1、O1、O2 等并行修改，O2 线程仍 active。因此本任务改用隔离 worktree 和独立 `codex/` 分支提交，不触碰共享分支与索引。
-- 首次 `git ls-remote origin refs/heads/main` 曾失败（exit 128，`Recv failure: Connection was reset`）；本轮再次查询成功，远端 `main` 与本地基准同为 `c21d649e659c080aae3b2daefbab8e673e55825c`。后续分支推送及远端 SHA 仍需单独验证。Q1 状态文件上一次已提交 SHA：`9d885aca2e4fe530c4e0481a5473a7a2b0313615`，不代表本轮修改。
+- 首次 `git ls-remote origin refs/heads/main` 曾失败（exit 128，`Recv failure: Connection was reset`）；重试成功后确认远端 `main` 与本地基准同为 `c21d649e659c080aae3b2daefbab8e673e55825c`。隔离分支 `codex/q1-m3-archive-sync-20261121` 已提交并推送，推送后 `ls-remote` 返回 `95dd02e341fe602f57fc5a64a78d8d189efad04a`，与本地提交一致。Q1 状态文件上一次已提交 SHA：`9d885aca2e4fe530c4e0481a5473a7a2b0313615`，不代表本轮修改。
 
 ## AutoDL 磁盘只读快照与清理建议
 
